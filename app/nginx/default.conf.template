@@ -1,0 +1,25 @@
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # `API_URL` e `DNS_RESOLVER` vem do ambiente (envsubst da imagem oficial do nginx).
+    # Com a API numa variavel, o nginx resolve o nome a cada requisicao e nao deixa de subir
+    # se a API ainda nao estiver de pe.
+    resolver ${DNS_RESOLVER} valid=10s;
+
+    location /api/ {
+        set $api_upstream ${API_URL};
+        proxy_pass $api_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

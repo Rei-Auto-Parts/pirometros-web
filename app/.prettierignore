@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+htmlcov
+package-lock.json
+adapters/clients/api-schema.d.ts
+adapters/presenters/ui

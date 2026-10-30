@@ -1,0 +1,30 @@
+# Gerados pelo plugin Byte Union: o metodo da organizacao nao vai para o repositorio do projeto
+/.specify/memory/constitution.md
+/CLAUDE.md
+
+# Segredos e configuracao local
+.env
+.env.*
+!.env.example
+*.pem
+secrets/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+npm-debug.log*
+
+# Ferramentas
+coverage/
+htmlcov/
+
+# Claude Code (preferencias locais)
+.claude/settings.local.json
+.claude-flow/
+.swarm/
+
+# Editor e SO
+.idea/
+.vscode/
+.DS_Store

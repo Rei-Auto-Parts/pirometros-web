@@ -1,0 +1,6 @@
+{
+  "default": {
+    "import": ["tests/bdd/support/**/*.ts", "tests/bdd/steps/**/*.tsx"],
+    "paths": ["tests/bdd/**/*.feature"]
+  }
+}

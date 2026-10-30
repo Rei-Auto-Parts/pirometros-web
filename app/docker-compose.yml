@@ -1,0 +1,46 @@
+# O nome do projeto vem daqui, nunca do diretorio: como o compose vive em `app/` em
+# todo repositorio da organizacao, sem esta linha todos colidem no projeto `app`.
+name: ${PROJECT_NAME:-pirometros-web}
+
+services:
+  dev:
+    build:
+      context: .
+      target: dev
+    image: ${PROJECT_NAME:-pirometros-web}-dev
+    container_name: ${PROJECT_NAME:-pirometros-web}-dev
+    networks: [interna]
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - node-modules:/app/node_modules
+    ports:
+      - '${WEB_PORT:-5173}:5173'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      INIT_WAIT_FOR: wiremock:8080
+      NODE_ENV: development
+      WIREMOCK_URL: http://wiremock:8080
+      # A API roda no compose do repositorio pirometros-api, publicada na porta 8000 do host.
+      API_PROXY_TARGET: ${API_PROXY_TARGET:-http://host.docker.internal:8000}
+    command: ['sleep', 'infinity']
+    depends_on:
+      - wiremock
+
+  wiremock:
+    image: wiremock/wiremock:3.9.1
+    container_name: ${PROJECT_NAME:-pirometros-web}-wiremock
+    networks: [interna]
+    expose:
+      - '8080'
+    volumes:
+      - ./tests/it/wiremock:/home/wiremock
+    command: ['--verbose', '--global-response-templating']
+
+volumes:
+  node-modules:
+
+networks:
+  interna:
+    name: ${PROJECT_NAME:-pirometros-web}-interna
