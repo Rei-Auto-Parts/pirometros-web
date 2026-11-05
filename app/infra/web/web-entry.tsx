@@ -6,23 +6,15 @@ import {
   type AppDependencies,
   AppDependenciesProvider,
 } from '../../adapters/presenters/dependencies/AppDependencies';
-import { AppLayout } from '../../adapters/presenters/layout/AppLayout';
-import { HomePage } from '../../adapters/presenters/pages/HomePage';
 import '../../adapters/presenters/styles/globals.css';
-import { ROUTES } from '../../core/domain/constants/routes.constants';
+import { APP_ROUTES } from './app-routes';
 
 export class WebEntry {
   constructor(private readonly dependencies: AppDependencies) {}
 
   run(container: HTMLElement): void {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const router = createBrowserRouter([
-      {
-        path: ROUTES.home,
-        element: <AppLayout />,
-        children: [{ index: true, element: <HomePage /> }],
-      },
-    ]);
+    const router = createBrowserRouter(APP_ROUTES);
     createRoot(container).render(
       <StrictMode>
         <AppDependenciesProvider dependencies={this.dependencies}>

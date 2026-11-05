@@ -1,0 +1,4 @@
+{
+  "active": "specs/002-gestao-de-pirometros-cards-de-visao",
+  "title": "Gestão de pirômetros, cards de visão geral e gráfico melhorado no pirometros-web: tela Pirômetros (editar apelido, cor, observação, faixa, ativo), cards por pirômetro no Acompanhamento, gráfico com seletor de período, cor por pirômetro e lacunas de tempo. Fora: criar pirômetro, e-mail, alertas, CSV, autenticação."
+}

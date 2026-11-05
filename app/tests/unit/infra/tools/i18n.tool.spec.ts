@@ -18,4 +18,25 @@ describe('t', () => {
     // Assert
     expect(empty).toEqual([]);
   });
+
+  it('deve nomear a tela de saude como Saude do sistema quando pede o titulo da antiga pagina inicial', () => {
+    // Act
+    const title = t(TEXT_KEYS.homeTitle);
+
+    // Assert
+    expect(title).toBe('Saúde do sistema');
+  });
+
+  it('deve devolver os quatro itens do menu lateral quando pede os nomes da navegacao', () => {
+    // Act
+    const items = [
+      TEXT_KEYS.navMonitoring,
+      TEXT_KEYS.navReadings,
+      TEXT_KEYS.navPyrometers,
+      TEXT_KEYS.navHealth,
+    ].map(t);
+
+    // Assert
+    expect(items).toEqual(['Acompanhamento', 'Leituras', 'Pirômetros', 'Saúde do sistema']);
+  });
 });

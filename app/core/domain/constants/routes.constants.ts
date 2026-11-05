@@ -1,3 +1,6 @@
 export const ROUTES = {
-  home: '/',
+  monitoring: '/',
+  readings: '/leituras',
+  pyrometers: '/pirometros',
+  health: '/saude',
 } as const;

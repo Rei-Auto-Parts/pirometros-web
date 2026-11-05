@@ -2,23 +2,22 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { HealthClient } from '../../../../adapters/clients/health.client';
 import { HealthUnavailableError } from '../../../../core/domain/errors/health-unavailable.error';
+import { createStub, removeStub, WIREMOCK } from '../../support/wiremock';
 
-const WIREMOCK = process.env['WIREMOCK_URL'] ?? 'http://wiremock:8080';
+const stubs: string[] = [];
 
 async function stubHealth(response: object): Promise<void> {
-  await fetch(`${WIREMOCK}/__admin/mappings`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  stubs.push(
+    await createStub({
       request: { method: 'GET', urlPath: '/api/health' },
       response: { headers: { 'Content-Type': 'application/json' }, ...response },
     }),
-  });
+  );
 }
 
 describe('HealthClient contra o WireMock', () => {
   afterEach(async () => {
-    await fetch(`${WIREMOCK}/__admin/mappings`, { method: 'DELETE' });
+    await Promise.all(stubs.splice(0).map(removeStub));
   });
 
   it('deve devolver o estado quando a API simulada responde 200', async () => {

@@ -1,0 +1,9 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/readings",
+    "queryParameters": { "dev_id": { "equalTo": "OFFLINE" } }
+  },
+  "response": { "status": 503 }
+}

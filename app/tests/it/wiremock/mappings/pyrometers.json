@@ -1,0 +1,25 @@
+{
+  "request": { "method": "GET", "urlPath": "/api/pyrometers" },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": [
+      {
+        "id": "SN-001",
+        "name": "Forno 1",
+        "nickname": "Forno 2",
+        "color": "#e11d48",
+        "note": "termopar trocado",
+        "active": true
+      },
+      {
+        "id": "SN-002",
+        "name": null,
+        "nickname": null,
+        "color": "#2563eb",
+        "note": null,
+        "active": false
+      }
+    ]
+  }
+}

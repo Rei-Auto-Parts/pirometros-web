@@ -1,0 +1,79 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "PUT",
+        "urlPath": "/api/pyrometers/SN-001",
+        "bodyPatterns": [
+          {
+            "matchesJsonPath": "$[?(@.nickname == 'Forno 2')]"
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "id": "SN-001",
+          "name": "Forno 1",
+          "nickname": "Forno 2",
+          "color": "#e11d48",
+          "note": "termopar trocado",
+          "active": true
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "urlPath": "/api/pyrometers/ZZZ-404"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "detail": "pirometro 'ZZZ-404' nao encontrado"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "urlPath": "/api/pyrometers/SN-422"
+      },
+      "response": {
+        "status": 422,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "detail": [
+            {
+              "loc": ["body", "color"],
+              "msg": "String should match pattern"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "PUT",
+        "urlPath": "/api/pyrometers/SN-409"
+      },
+      "response": {
+        "status": 409,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "detail": "a cor '#dc2626' ja esta em uso por outro pirometro"
+        }
+      }
+    }
+  ]
+}

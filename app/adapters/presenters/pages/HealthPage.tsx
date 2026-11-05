@@ -31,7 +31,7 @@ function ServiceRow({ name, state }: ServiceRowProps) {
   );
 }
 
-export function HomePage() {
+export function HealthPage() {
   const { data } = useHealth();
 
   return (

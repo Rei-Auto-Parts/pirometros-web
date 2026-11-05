@@ -1,0 +1,17 @@
+{
+  "request": { "method": "GET", "urlPath": "/api/readings/series" },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": [
+      {
+        "pyrometer_id": "SN-001",
+        "pyrometer_name": "Forno 1",
+        "points": [
+          { "measured_at": "2026-05-01T08:00:00", "temperature": 700.5 },
+          { "measured_at": "2026-05-01T08:05:00", "temperature": null }
+        ]
+      }
+    ]
+  }
+}

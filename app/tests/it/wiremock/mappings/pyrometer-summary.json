@@ -1,0 +1,23 @@
+{
+  "request": { "method": "GET", "urlPath": "/api/pyrometers/summary" },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": [
+      {
+        "pyrometer_id": "SN-001",
+        "temperature": 1510,
+        "measured_at": "2026-11-05T10:05:00",
+        "battery": 62,
+        "minutes_without_reading": 3
+      },
+      {
+        "pyrometer_id": "SN-002",
+        "temperature": 1400,
+        "measured_at": "2026-11-05T10:00:00",
+        "battery": null,
+        "minutes_without_reading": 600
+      }
+    ]
+  }
+}

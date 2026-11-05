@@ -1,0 +1,35 @@
+{
+  "priority": 5,
+  "request": { "method": "GET", "urlPath": "/api/readings" },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "items": [
+        {
+          "id": 1,
+          "measured_at": "2026-05-01T08:00:00",
+          "pyrometer_id": "SN-001",
+          "pyrometer_name": "Forno 1",
+          "temperature": 700.5,
+          "unit": "C",
+          "battery": 80,
+          "place": 1
+        },
+        {
+          "id": 2,
+          "measured_at": "2026-05-01T07:55:00",
+          "pyrometer_id": "SN-002",
+          "pyrometer_name": null,
+          "temperature": 650,
+          "unit": null,
+          "battery": null,
+          "place": null
+        }
+      ],
+      "total": 2,
+      "page": 1,
+      "page_size": 50
+    }
+  }
+}
