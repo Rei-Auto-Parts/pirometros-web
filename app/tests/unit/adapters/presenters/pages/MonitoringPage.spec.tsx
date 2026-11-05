@@ -110,7 +110,6 @@ describe('MonitoringPage', () => {
     const execute = vi
       .fn<SeriesExecute>()
       .mockRejectedValueOnce(new ReadingsUnavailableError('falha simulada'))
-      .mockRejectedValueOnce(new ReadingsUnavailableError('falha simulada'))
       .mockResolvedValue(SERIES);
     renderPage(execute);
 
@@ -226,14 +225,28 @@ describe('MonitoringPage', () => {
     expect(screen.queryByText('PI-15')).toBeNull();
   });
 
-  it('deve pedir a série da última hora de todos para as miniaturas quando abre', async () => {
+  it('deve fazer so a consulta do grafico quando abre, sem consulta extra para miniaturas', async () => {
     // Arrange
     const execute = vi.fn<SeriesExecute>().mockResolvedValue(SERIES);
 
     // Act
     renderPage(execute);
+    await screen.findByRole('img', { name: 'Gráfico de temperaturas' });
 
     // Assert
-    await waitFor(() => expect(execute).toHaveBeenCalledWith(null, 'hour'));
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(execute).toHaveBeenCalledWith(null, 'today');
+  });
+
+  it('deve nao mostrar miniatura nos cards quando ha cards', async () => {
+    // Arrange
+    const execute = vi.fn<SeriesExecute>().mockResolvedValue(SERIES);
+
+    // Act
+    renderPage(execute);
+    const cards = await screen.findByRole('region', { name: 'Visão geral dos pirômetros' });
+
+    // Assert
+    expect(within(cards).queryAllByRole('img')).toHaveLength(0);
   });
 });

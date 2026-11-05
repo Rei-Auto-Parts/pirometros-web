@@ -23,7 +23,6 @@ export function MonitoringPage() {
   const pyrometers = usePyrometers();
   const summaries = usePyrometerSummaries();
   const series = useReadingsSeries(pyrometerId, periodKey);
-  const lastHour = useReadingsSeries(null, 'hour');
   // O eixo acompanha a janela consultada: ancorado no instante da ultima busca, nao a cada render.
   const fetchedAt = series.dataUpdatedAt;
   const period = useMemo(
@@ -42,14 +41,9 @@ export function MonitoringPage() {
       (item) => item.pyrometerId === null || !inactiveIds.has(item.pyrometerId),
     );
   }, [series.data, pyrometers.data]);
-  const failed = [pyrometers, summaries, series, lastHour].some((query) => query.isError);
+  const failed = [pyrometers, summaries, series].some((query) => query.isError);
   const retry = (): void => {
-    void Promise.all([
-      pyrometers.refetch(),
-      summaries.refetch(),
-      series.refetch(),
-      lastHour.refetch(),
-    ]);
+    void Promise.all([pyrometers.refetch(), summaries.refetch(), series.refetch()]);
   };
   const noop = (): void => undefined;
 
@@ -63,7 +57,6 @@ export function MonitoringPage() {
         <PyrometerCards
           pyrometers={pyrometers.data}
           summaries={summaries.data}
-          series={lastHour.data ?? []}
           selectedId={pyrometerId}
           onSelect={setPyrometerId}
         />

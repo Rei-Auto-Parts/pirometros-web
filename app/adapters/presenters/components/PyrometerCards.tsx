@@ -1,21 +1,13 @@
 import { TEXT_KEYS } from '../../../core/domain/constants/text-keys.constants';
 import type { PyrometerDto } from '../../../core/domain/dtos/pyrometer.dto';
-import type {
-  PyrometerSeriesDto,
-  SeriesPointDto,
-} from '../../../core/domain/dtos/pyrometer-series.dto';
 import type { PyrometerSummaryDto } from '../../../core/domain/dtos/pyrometer-summary.dto';
 import { onlyActive, sortByDisplayName } from '../../../core/domain/models/pyrometer-name.model';
 import { t } from '../../../infra/tools/i18n.tool';
 import { PyrometerCard } from './PyrometerCard';
 
-const NO_POINTS: readonly SeriesPointDto[] = [];
-
 interface PyrometerCardsProps {
   readonly pyrometers: readonly PyrometerDto[];
   readonly summaries: readonly PyrometerSummaryDto[];
-  /** Serie da ultima hora, de todos os pirometros, para a miniatura. */
-  readonly series: readonly PyrometerSeriesDto[];
   readonly selectedId: string | null;
   readonly onSelect: (id: string | null) => void;
 }
@@ -24,7 +16,6 @@ interface PyrometerCardsProps {
 export function PyrometerCards({
   pyrometers,
   summaries,
-  series,
   selectedId,
   onSelect,
 }: PyrometerCardsProps) {
@@ -37,7 +28,6 @@ export function PyrometerCards({
             <PyrometerCard
               pyrometer={pyrometer}
               summary={summaries.find((item) => item.pyrometerId === pyrometer.id)}
-              points={series.find((item) => item.pyrometerId === pyrometer.id)?.points ?? NO_POINTS}
               selected={pyrometer.id === selectedId}
               onSelect={() => onSelect(pyrometer.id === selectedId ? null : pyrometer.id)}
             />

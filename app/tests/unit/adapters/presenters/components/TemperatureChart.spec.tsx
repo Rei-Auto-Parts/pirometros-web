@@ -169,7 +169,7 @@ describe('TemperatureChart', () => {
     expect(ticks.map((tick) => tick.textContent)).toContain('12:00');
   });
 
-  it('deve nao ligar dois pontos isolados quando ha mais de 15 minutos entre eles', () => {
+  it('deve ligar duas leituras espacadas por uma unica reta quando ha horas entre elas', () => {
     // Arrange
     const series = seriesOf([
       ['2026-11-04T10:00:00', 700],
@@ -182,14 +182,13 @@ describe('TemperatureChart', () => {
     );
 
     // Assert
-    const paths = [...container.querySelectorAll('.recharts-line-curve')].map(
-      (path) => path.getAttribute('d') ?? '',
-    );
-    expect(paths.length).toBeGreaterThan(0);
-    expect(paths.every((d) => !/[LC]/.test(d))).toBe(true);
+    const d = container.querySelector('.recharts-line-curve')?.getAttribute('d') ?? '';
+    expect(d.match(/M/g)).toHaveLength(1);
+    expect(d).toMatch(/L/);
+    expect(d).not.toMatch(/C/);
   });
 
-  it('deve desenhar dois trechos separados quando a lacuna fica entre dois pares de leituras', () => {
+  it('deve desenhar um trecho so, sem quebra, quando ha lacuna maior que 15 minutos entre pares de leituras', () => {
     // Arrange
     const series = seriesOf([
       ['2026-11-04T10:00:00', 700],
@@ -205,10 +204,11 @@ describe('TemperatureChart', () => {
 
     // Assert
     const d = container.querySelector('.recharts-line-curve')?.getAttribute('d') ?? '';
-    expect(d.match(/M/g)).toHaveLength(2);
+    expect(d.match(/M/g)).toHaveLength(1);
+    expect(d.match(/L/g)).toHaveLength(3);
   });
 
-  it('deve desenhar um trecho so quando as leituras estao a 5 minutos uma da outra', () => {
+  it('deve desenhar um trecho so de retas quando as leituras estao a 5 minutos uma da outra', () => {
     // Arrange
     const series = seriesOf([
       ['2026-11-04T10:00:00', 700],
@@ -225,6 +225,62 @@ describe('TemperatureChart', () => {
     // Assert
     const d = container.querySelector('.recharts-line-curve')?.getAttribute('d') ?? '';
     expect(d.match(/M/g)).toHaveLength(1);
+    expect(d).not.toMatch(/C/);
+  });
+
+  it('deve mostrar um ponto pequeno por leitura mesmo quando as leituras estao a horas de distancia', () => {
+    // Arrange
+    const series = seriesOf([
+      ['2026-11-04T10:00:00', 700],
+      ['2026-11-04T12:00:00', 710],
+    ]);
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    const dots = container.querySelectorAll('.recharts-line-dot');
+    expect(dots).toHaveLength(2);
+    dots.forEach((dot) => expect(dot.getAttribute('r')).toBe('3'));
+  });
+
+  it('deve pintar o ponto com a cor da linha quando o pirometro tem cor', () => {
+    // Arrange
+    const series = seriesOf([['2026-11-04T10:00:00', 700]]);
+    const pyrometers: PyrometerDto[] = [
+      { id: 'SN-1', name: 'Forno 1', nickname: null, color: '#e11d48', note: null, active: true },
+    ];
+
+    // Act
+    const { container } = render(
+      <TemperatureChart
+        series={series}
+        period={DAY}
+        pyrometers={pyrometers}
+        width={800}
+        height={400}
+      />,
+    );
+
+    // Assert
+    const dot = container.querySelector('.recharts-line-dot');
+    expect(dot?.getAttribute('fill')).toBe('#e11d48');
+    expect(dot?.getAttribute('stroke')).toBe('#e11d48');
+  });
+
+  it('deve manter um ponto por leitura e uma so linha quando ha uma leitura isolada', () => {
+    // Arrange
+    const series = seriesOf([['2026-11-04T10:00:00', 700]]);
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    expect(container.querySelectorAll('.recharts-line-dot')).toHaveLength(1);
   });
 
   it('deve desenhar dez pirometros com mil pontos cada em menos de dois segundos', () => {

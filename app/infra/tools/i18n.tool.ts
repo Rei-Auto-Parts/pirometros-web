@@ -76,7 +76,6 @@ const PT_BR: Record<TextKey, string> = {
   unitHours: 'h',
   noSummary: 'Sem leituras com temperatura',
   summaryCardsLabel: 'Visão geral dos pirômetros',
-  sparklineLabel: 'Temperaturas da última hora',
   temperatureUnit: '°C',
   colorBlue: 'Azul',
   colorRed: 'Vermelho',

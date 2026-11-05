@@ -14,10 +14,10 @@
 | Paleta | 12 cores em constante de domínio, **idênticas e na mesma ordem** da API; o seletor mostra só essas | Seletor livre de cor (fora de escopo) | Esclarecimento "paleta fixa de 12 cores" |
 | Eixo de tempo do gráfico | `x` = segundos corridos por aritmética de calendário puro (dias desde 1970 × 86.400 + segundos do dia), sem `Date` | `Date.UTC`/`new Date(reg_date)` | P2: nunca aplicar `Date` a `reg_date`. O eixo "segundos do dia" atual não serve para 24 h e 3 dias |
 | Ticks do eixo | Passo conforme a duração do período (15 min, 1 h, 3 h, 12 h), alinhados à meia-noite; rótulo `HH:mm`, ou `dd/MM HH:mm` quando o período cruza a meia-noite | Deixar o Recharts escolher | Rótulos legíveis nos cinco períodos |
-| Lacuna | Entre dois pontos consecutivos com mais de 900 s, insere um ponto de valor `null`; a linha não liga nulos | Desenhar a reta; quebrar em várias linhas | RF-10; o Recharts já interrompe a linha em `null` sem `connectNulls` |
+| Lacuna (**substituída pela emenda abaixo**) | Antes: ponto `null` após 900 s. Agora não há lacuna | — | 
 | Períodos do gráfico | Chave (`hour`, `sixHours`, `day`, `today`, `threeDays`) → janela calculada pelo relógio local no momento da consulta; `today` mantém 00:00–23:59 | Guardar janela no estado | A janela relativa precisa andar a cada atualização de 5 min; a chave da consulta é a chave do período |
 | Atualização automática | Mantém 5 min (`REFRESH_INTERVAL_MS`) em cards, gráfico e miniaturas | 30 s | Esclarecimento: o sincronizador só traz dado a cada 5 min |
-| Miniatura dos cards | Uma consulta de série da **última hora** de todos os pirômetros, separada da do gráfico | Reaproveitar a série do gráfico | O gráfico pode estar filtrado ou em outro período; a consulta é a mesma chave quando o gráfico está em "Última hora" (cache) |
+| Miniatura dos cards | **Removida (emenda 2026-11-05)**, junto da consulta extra de série da última hora | Pedido do usuário |
 | Estados de carregando/erro | **Um** estado por tela: o Acompanhamento junta pirômetros, resumo e série; um só "Carregando" e um só "Tentar de novo" (refaz as três consultas) | Um alerta por bloco | Os cenários BDD existentes usam `getByRole` no singular; também evita a tela cheia de alertas |
 | Gravação do complemento | Mutação por formulário (uma por pirômetro); ao sucesso, invalida a lista de pirômetros | Estado global de edição | RF-03/RF-14: cada linha tem seu estado de salvando/salvo/erro e preserva o digitado |
 | Erro de gravação | `PUT` 404/422 vira `ProfileRejectedError`; falha de rede ou 5xx vira `ReadingsUnavailableError`; mensagens em português por chave de texto | Mostrar o texto do servidor (inglês) | P1: toda mensagem em português |
@@ -64,6 +64,30 @@
 | Código do local | **Não implementado.** `reg_place` não aparece no card; futura feature de cadastro/edição de "locais" (fora de escopo, sem endpoint nem tabela) | Pedido do usuário |
 
 **Arquivos da emenda:** `core/domain/models/percent.model.ts` (+spec), `adapters/presenters/components/SevenSegmentDisplay.tsx` (+spec), `BatteryIndicator.tsx` (+spec), `PyrometerCard.tsx` (+spec) e o BDD (`gestao-de-pirometros.feature` e `.steps.tsx`).
+
+## Emenda de 2026-11-05: gráfico sem quebra e com ponto por leitura (RF-10)
+
+| Decisão | Escolha | Por quê |
+|---|---|---|
+| Ligação | `toChartPoints` só mapeia as leituras para `{ x, temperature }`; nenhum ponto `null` é inserido e `gapSeconds` e `SERIES_GAP_SECONDS` deixam de existir | RF-10 emendada: leituras espaçadas não podem sumir |
+| Nome do modelo | `series-gap.model.ts` → `series-points.model.ts` (o modelo não trata mais lacuna) | Só 3 importações (gráfico, miniatura, passo BDD) |
+| Traço | `type="linear"` (reta entre leituras) em vez de `monotone`, para não inventar curva entre leituras distantes | Plano aprovado |
+| Pontos | `dot={{ r: 3 }}` e `activeDot={{ r: 5 }}` na cor da linha; `isAnimationActive={false}` e dados memoizados mantidos | Cada leitura visível; sem re-registro da série |
+| Miniatura dos cards | Removida (ver a emenda de 2026-11-05 abaixo) | — |
+
+**Arquivos da emenda:** `core/domain/models/series-points.model.ts` (renomeado, +spec), `core/domain/constants/readings.constants.ts`, `adapters/presenters/components/TemperatureChart.tsx` e `Sparkline.tsx` (importação), BDD (`gestao-de-pirometros.feature` e `.steps.tsx`).
+
+## Emenda de 2026-11-05: remoção da miniatura dos cards (RF-06)
+
+| Decisão | Escolha | Por quê |
+|---|---|---|
+| Miniatura | `Sparkline.tsx` e o spec saem; `PyrometerCard` e `PyrometerCards` perdem as props `points` e `series` | Pedido do usuário (aparecia em branco) |
+| Consulta extra | `useReadingsSeries(null, 'hour')` no `MonitoringPage` existia só para a miniatura: removida, junto do tratamento de erro/refazer dela. O período "Última hora" do gráfico (`ChartPeriodKey`) e `GetReadingsSeriesUseCase` continuam | O gráfico principal usa a mesma consulta com o período escolhido |
+| Texto e constantes | Chave `sparklineLabel` sai de `text-keys` e `i18n`; nenhuma constante fica sem uso | Sem código morto |
+| Layout do card | Sem o bloco de 36 px da miniatura; o card termina na linha do tempo sem leitura, com espaçamento `gap-1.5` | Sem espaço vazio |
+| BDD | `FakeApi` deixa de separar a janela da miniatura (todo `lastSeries` é do gráfico); passos que filtravam por janela simplificados | A miniatura era a única consulta de janela curta |
+
+**Arquivos da emenda:** `adapters/presenters/components/Sparkline.tsx` (removido), `PyrometerCard.tsx`, `PyrometerCards.tsx`, `adapters/presenters/pages/MonitoringPage.tsx`, `core/domain/constants/text-keys.constants.ts`, `infra/tools/i18n.tool.ts`, e os testes e BDD correspondentes.
 
 ## Padrões de projeto aplicados
 
@@ -176,11 +200,11 @@ Nenhum alvo novo no `Makefile` e nenhum serviço novo. `make api-types http://ho
 | Risco | Probabilidade | Mitigação |
 |---|---|---|
 | Os BDD existentes usam `getByRole('status')` e `getByRole('button', {name:'Tentar de novo'})` no singular | alta | Estado único por tela (decisão acima) |
-| A miniatura gera uma 2ª chamada de série e o passo antigo "não aparece nenhuma leitura de outro dia" olhava todas as chamadas | alta | Ajustar o passo e a `FakeApi` para considerar só a janela do gráfico; registrado como desvio |
+| ~~A miniatura gera uma 2ª chamada de série~~ | — | Resolvido: miniatura e chamada extra removidas |
 | Aritmética de calendário errada (anos bissextos) | média | Testes com 29/02/2028, virada de ano e 31/10→01/11 |
 | Recharts em jsdom não mede layout | média | Tamanho fixo nos testes, como já feito |
 | Salvar congela a cor padrão | baixa | Registrado; a cor escolhida é a que a API devolve |
-| 10 cards com miniatura pesam no desenho | baixa | `isAnimationActive={false}` e teste de desempenho |
+| ~~10 cards com miniatura pesam no desenho~~ | — | Resolvido: sem miniatura |
 
 ## Conformidade com a constituição
 

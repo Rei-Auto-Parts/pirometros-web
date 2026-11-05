@@ -2,7 +2,6 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PyrometerCards } from '../../../../../adapters/presenters/components/PyrometerCards';
 import type { PyrometerDto } from '../../../../../core/domain/dtos/pyrometer.dto';
-import type { PyrometerSeriesDto } from '../../../../../core/domain/dtos/pyrometer-series.dto';
 import type { PyrometerSummaryDto } from '../../../../../core/domain/dtos/pyrometer-summary.dto';
 
 function pyrometer(id: string, name: string, active = true): PyrometerDto {
@@ -22,7 +21,6 @@ const SUMMARIES: PyrometerSummaryDto[] = [
 function renderCards(
   props: {
     pyrometers?: PyrometerDto[];
-    series?: PyrometerSeriesDto[];
     selectedId?: string | null;
     onSelect?: (id: string | null) => void;
   } = {},
@@ -31,7 +29,6 @@ function renderCards(
     <PyrometerCards
       pyrometers={props.pyrometers ?? [pyrometer('B', 'PI-14'), pyrometer('A', 'PI-12')]}
       summaries={SUMMARIES}
-      series={props.series ?? []}
       selectedId={props.selectedId ?? null}
       onSelect={props.onSelect ?? vi.fn()}
     />,
@@ -127,5 +124,14 @@ describe('PyrometerCards', () => {
 
     // Assert
     expect(screen.getByRole('region', { name: 'Visão geral dos pirômetros' })).toBeInTheDocument();
+  });
+
+  it('deve nao mostrar miniatura em nenhum card quando renderizado', () => {
+    // Arrange / Act
+    const { container } = renderCards();
+
+    // Assert
+    expect(screen.queryAllByRole('img')).toHaveLength(0);
+    expect(container.querySelector('.recharts-wrapper')).toBeNull();
   });
 });

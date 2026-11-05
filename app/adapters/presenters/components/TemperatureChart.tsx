@@ -18,7 +18,7 @@ import { buildChartAxis, type ChartAxis } from '../../../core/domain/models/char
 import { getChartPeriod } from '../../../core/domain/models/chart-period.model';
 import { findPyrometer, resolveName } from '../../../core/domain/models/pyrometer-name.model';
 import { formatEpoch } from '../../../core/domain/models/reg-date.model';
-import { toChartPoints, type ChartPoint } from '../../../core/domain/models/series-gap.model';
+import { toChartPoints, type ChartPoint } from '../../../core/domain/models/series-points.model';
 import { t } from '../../../infra/tools/i18n.tool';
 
 const DEFAULT_HEIGHT = 420;
@@ -52,9 +52,10 @@ function renderLines(
         data={data}
         dataKey="temperature"
         name={resolveName(pyrometers, item.pyrometerId, item.pyrometerName)}
-        type="monotone"
+        type="linear"
         stroke={color}
-        dot={false}
+        dot={{ r: 3, fill: color, stroke: color }}
+        activeDot={{ r: 5, fill: color, stroke: color }}
         isAnimationActive={false}
       />
     );

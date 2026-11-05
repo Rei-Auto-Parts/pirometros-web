@@ -3,7 +3,7 @@ import { Given, Then, When } from '@cucumber/cucumber';
 import { fireEvent, screen, within } from '@testing-library/react';
 import { PYROMETER_PALETTE } from '../../../core/domain/constants/pyrometer-profile.constants';
 import { toEpochSeconds } from '../../../core/domain/models/reg-date.model';
-import { toChartPoints } from '../../../core/domain/models/series-gap.model';
+import { toChartPoints } from '../../../core/domain/models/series-points.model';
 import type { PainelWorld } from '../support/painel-world';
 
 const SERIAL: Record<string, string> = { 'PI-12': 'S-12', 'PI-14': 'S-14', 'PI-15': 'S-15' };
@@ -90,11 +90,7 @@ function goTo(link: string): void {
 }
 
 function chartCalls(world: PainelWorld): URL[] {
-  return world.api.callsTo('/api/readings/series').filter((url) => {
-    const start = toEpochSeconds(url.searchParams.get('start') ?? '');
-    const end = toEpochSeconds(url.searchParams.get('end') ?? '');
-    return end - start > 3600;
-  });
+  return world.api.callsTo('/api/readings/series');
 }
 
 // ---- Dado
@@ -412,19 +408,15 @@ Then(
   },
 );
 
-Then('uma miniatura das temperaturas da última hora', async function (this: PainelWorld) {
-  await this.eventually(() =>
-    assert.ok(within(cardOf('PI-12')).getByRole('img', { name: /Temperaturas da última hora/ })),
-  );
-  const hour = this.api
+Then('o card não tem miniatura de temperaturas', async function (this: PainelWorld) {
+  await this.eventually(() => assert.ok(cardOf('PI-12')));
+  assert.equal(within(cardOf('PI-12')).queryAllByRole('img').length, 0);
+  assert.equal(cardOf('PI-12').querySelectorAll('.recharts-wrapper').length, 0);
+  assert.equal(cardOf('PI-12').querySelectorAll('svg').length, 1);
+  const extra = this.api
     .callsTo('/api/readings/series')
-    .filter(
-      (url) =>
-        toEpochSeconds(url.searchParams.get('end') ?? '') -
-          toEpochSeconds(url.searchParams.get('start') ?? '') ===
-        3600,
-    );
-  assert.ok(hour.length > 0, 'a miniatura deve consultar a ultima hora');
+    .filter((url) => url.searchParams.get('dev_id') === null);
+  assert.ok(extra.every((url) => (url.searchParams.get('start') ?? '').endsWith('T00:00:00')));
 });
 
 Then(
@@ -493,32 +485,45 @@ Then('o pirômetro filtrado continua o mesmo', function (this: PainelWorld) {
 
 /**
  * O jsdom nao desenha o traco no grafico responsivo: confere que o grafico recebeu as duas
- * leituras e que a regra de lacuna as separa (o desenho do corte e provado no teste unitario).
+ * leituras e que o mapeamento mantem as duas, sem ponto vazio entre elas (o desenho da reta e dos
+ * pontos e provado no teste unitario do grafico).
  */
+function receivedPoints(world: PainelWorld, name: string) {
+  const received = world.api.lastSeries.find((series) => series.pyrometer_id === serialOf(name));
+  return (received?.points ?? []).map((point) => ({
+    measuredAt: point.measured_at,
+    temperature: Number(point.temperature),
+  }));
+}
+
 Then(
-  /^a linha de "([^"]+)" é interrompida entre (\S+) e (\S+) \(mais de 15 minutos sem leitura\)$/,
+  /^a linha de "([^"]+)" liga a leitura das (\S+) à das (\S+) sem interrupção$/,
   async function (this: PainelWorld, name: string, first: string, second: string) {
     await this.eventually(() => assert.deepEqual(legendNames(), [name]));
-    const received = this.api.lastSeries.find((series) => series.pyrometer_id === serialOf(name));
-    const points = (received?.points ?? []).map((point) => ({
-      measuredAt: point.measured_at,
-      temperature: Number(point.temperature),
-    }));
+    const points = receivedPoints(this, name);
     assert.deepEqual(
       points.map((point) => point.measuredAt),
       [`${DAY}T${first}:00`, `${DAY}T${second}:00`],
     );
-    assert.deepEqual(
-      toChartPoints(points).map((point) => point.temperature === null),
-      [false, true, false],
-    );
+    const chartPoints = toChartPoints(points);
+    assert.equal(chartPoints.length, 2);
+    assert.ok(chartPoints.every((point) => Number.isFinite(point.temperature)));
+    for (const curve of document.querySelectorAll('.recharts-line-curve')) {
+      assert.equal(
+        (curve.getAttribute('d') ?? '').split('M').length - 1 <= 1,
+        true,
+        'linha quebrada',
+      );
+    }
   },
 );
 
-Then('não é ligada por uma reta', function () {
-  for (const curve of document.querySelectorAll('.recharts-line-curve')) {
-    assert.ok(!/[LC]/.test(curve.getAttribute('d') ?? ''), 'trecho ligado por uma reta');
-  }
+/** O jsdom nao desenha os pontos no grafico responsivo: confere as duas leituras no mapeamento (o desenho, no teste unitario). */
+Then('cada uma das duas leituras aparece como um ponto', function (this: PainelWorld) {
+  assert.deepEqual(
+    toChartPoints(receivedPoints(this, 'PI-12')).map((point) => point.temperature),
+    [1500, 1500],
+  );
 });
 
 Then(

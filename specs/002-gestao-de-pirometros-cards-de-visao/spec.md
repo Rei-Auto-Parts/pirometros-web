@@ -19,7 +19,7 @@ horas sem leitura, escondendo falhas de comunicação.
    marcar os aposentados como inativos.
 2. No **Acompanhamento**, um **card por pirômetro** com a última temperatura, a bateria e há
    quanto tempo ele não envia leitura, acima do gráfico.
-3. Um **gráfico melhor**: período escolhível, cor de cada pirômetro e lacunas visíveis.
+3. Um **gráfico melhor**: período escolhível, cor de cada pirômetro e uma linha contínua com um ponto em cada leitura.
 
 ## Fora de escopo
 
@@ -34,6 +34,7 @@ horas sem leitura, escondendo falhas de comunicação.
 - Mostrar leituras sem temperatura, ou estimar valores ausentes.
 - Lembrar escolhas (período, filtro) depois de recarregar a página.
 - Tela para a TV do laboratório.
+- Miniatura (sparkline) das temperaturas nos cards: **removida a pedido do usuário** (aparecia em branco); o gráfico principal continua sendo o lugar das séries.
 - Código do local (`reg_place`): não é exibido nem tratado nesta feature. **Feature futura:** cadastrar e editar "locais" e atribuir a cada pirômetro o significado do código (não criar endpoint, tabela nem tela agora).
 
 ## Alterações em relação à spec 001 do front
@@ -63,11 +64,11 @@ O restante da 001 vale, inclusive RF-13 (atualização periódica) com o interva
 | RF-03 | A tela Pirômetros deve permitir editar, no **painel de edição** do pirômetro selecionado, o apelido (contador `n/40`), a cor, a observação (contador `n/500`) e a situação (interruptor "Ativo"). **Salvar** só fica habilitado quando há alteração e os campos são válidos; **Descartar alterações** só aparece quando há alteração. Salvar mostra confirmação junto dos botões; erro de validação (422), de cor em uso (409) ou da API mostra mensagem clara no painel e preserva o que o usuário digitou. Não há botão para criar ou excluir pirômetro. *(Emenda de 2026-11-05.)* | obrigatório |
 | RF-04 | O nome mostrado de um pirômetro, em todas as telas, é **"TAG - APELIDO"** (ex.: "PI-14 - Forno 1"), com TAG = nome do aparelho (ou o serial, se não houver nome); sem apelido, só a TAG. O apelido não substitui a TAG. Vale em cards, legenda e tooltip do gráfico, filtros do Acompanhamento e das Leituras, coluna de pirômetro das Leituras e tela Pirômetros. *(Emenda de 2026-11-05: antes o apelido substituía o nome do aparelho.)* | obrigatório |
 | RF-05 | A cor do pirômetro, escolhida de uma paleta fixa de 12 cores, deve identificá-lo nos cards, na linha do gráfico e na tela Pirômetros. O nome do pirômetro está sempre escrito junto da cor: a cor nunca é a única identificação. | obrigatório |
-| RF-06 | O Acompanhamento deve mostrar, acima do gráfico, um card por pirômetro ativo com: nome (RF-04), cor, **última temperatura em display de 7 segmentos** (dígitos inteiros e a unidade, com aparência de mostrador de forno, **em tamanho de destaque (cerca de 33% maior que o planejado antes) sem quebrar a grade de cards lado a lado**, com **dígitos acesos em vermelho de LED e segmentos apagados em vermelho bem tênue**, cor fixa (não é alerta por faixa de temperatura e não depende da cor do pirômetro), legível com bom contraste em tema claro e escuro e com o valor real em texto acessível; sem leitura, traços `---` no mesmo estilo), data da última leitura (`dd/MM/yyyy HH:mm`), **bateria como porcentagem** (ex.: `63%`) com uma **barra horizontal fina** proporcional de 0 a 100 (valor fora desse intervalo é limitado na barra; valor nulo mostra "—" e nenhuma barra), tempo sem leitura em minutos (ou horas e minutos acima de 60) e uma miniatura (linha) das temperaturas da última hora. O card não mostra o código do local. **Premissa: unidade da bateria presumida %, a confirmar.** *(Emenda de 2026-11-05.)* | obrigatório |
+| RF-06 | O Acompanhamento deve mostrar, acima do gráfico, um card por pirômetro ativo com: nome (RF-04), cor, **última temperatura em display de 7 segmentos** (dígitos inteiros e a unidade, com aparência de mostrador de forno, **em tamanho de destaque (cerca de 33% maior que o planejado antes) sem quebrar a grade de cards lado a lado**, com **dígitos acesos em vermelho de LED e segmentos apagados em vermelho bem tênue**, cor fixa (não é alerta por faixa de temperatura e não depende da cor do pirômetro), legível com bom contraste em tema claro e escuro e com o valor real em texto acessível; sem leitura, traços `---` no mesmo estilo), data da última leitura (`dd/MM/yyyy HH:mm`), **bateria como porcentagem** (ex.: `63%`) com uma **barra horizontal fina** proporcional de 0 a 100 (valor fora desse intervalo é limitado na barra; valor nulo mostra "—" e nenhuma barra), tempo sem leitura em minutos (ou horas e minutos acima de 60). O card **não** tem miniatura (linha) das temperaturas e não mostra o código do local. *(Emenda de 2026-11-05: miniatura removida a pedido do usuário, que a via em branco.)* **Premissa: unidade da bateria presumida %, a confirmar.** *(Emenda de 2026-11-05.)* | obrigatório |
 | RF-07 | O tempo sem leitura é só informação: o card não muda de aparência, não alerta e não recebe destaque por falta de leitura ou por bateria baixa, por maior que seja o tempo. | obrigatório |
 | RF-08 | Os cards ficam em ordem alfabética pelo nome mostrado. Clicar num card deve filtrar o gráfico para aquele pirômetro; clicar de novo, ou escolher "Todos" no filtro, volta a mostrar todos. O filtro de pirômetro e o card selecionado ficam sempre em sincronia. | obrigatório |
 | RF-09 | O gráfico deve permitir escolher o período entre Última hora, Últimas 6 horas, Últimas 24 horas, Hoje (padrão) e Últimos 3 dias, sem recarregar a página e mantendo o pirômetro filtrado. | obrigatório |
-| RF-10 | O gráfico deve desenhar uma linha por pirômetro na cor dele e **não** ligar dois pontos consecutivos separados por mais de 15 minutos: o trecho sem leitura aparece como interrupção da linha. | obrigatório |
+| RF-10 | O gráfico deve desenhar uma linha por pirômetro na cor dele, **sempre ligando todas as leituras do pirômetro com uma linha reta entre leituras consecutivas, sem interrupção por intervalo**, e mostrar **um ponto pequeno em cada leitura** (maior ao passar o mouse), na cor da linha. Leituras espaçadas por minutos ou horas continuam visíveis. *(Emenda de 2026-11-05: substitui a lacuna de 15 minutos, que escondia leituras isoladas.)* | obrigatório |
 | RF-11 | Pirômetros inativos não aparecem nos cards, no gráfico nem no filtro do Acompanhamento. Continuam na tela Pirômetros e disponíveis no filtro das Leituras, para consultar o histórico. | obrigatório |
 | RF-12 | Os cards, o gráfico e a tela Pirômetros devem indicar que estão carregando, informar quando não há dados e quando a API está indisponível, permitindo tentar de novo. Com a API indisponível, o menu, o tema e o recolher do menu continuam funcionando. | obrigatório |
 | RF-13 | Toda data aparece como `dd/MM/yyyy HH:mm`, sem conversão de fuso, e todo texto é em português do Brasil. | obrigatório |
@@ -146,7 +147,7 @@ Funcionalidade: Gestão de pirômetros, cards e gráfico
     E que agora são 10:08
     Quando eu abro o Acompanhamento
     Então o card de "PI-12" mostra 1510, a data 10:05, bateria 62% e "3 min sem leitura"
-    E uma miniatura das temperaturas da última hora
+    Mas o card não tem miniatura de temperaturas
 
   Cenário: Tempo sem leitura é só informação
     Dado que "PI-14" está sem leitura há 10 horas
@@ -173,11 +174,11 @@ Funcionalidade: Gestão de pirômetros, cards e gráfico
     Então o gráfico mostra só as seis últimas horas
     E o pirômetro filtrado continua o mesmo
 
-  Cenário: Lacuna aparece no gráfico
+  Cenário: Leituras espaçadas aparecem ligadas por linha com um ponto cada
     Dado que "PI-12" tem leituras às 10:00 e às 12:00 e nenhuma entre elas
     Quando eu vejo o gráfico
-    Então a linha de "PI-12" é interrompida entre 10:00 e 12:00 (mais de 15 minutos sem leitura)
-    Mas não é ligada por uma reta
+    Então a linha de "PI-12" liga a leitura das 10:00 à das 12:00 sem interrupção
+    E cada uma das duas leituras aparece como um ponto
 
   Cenário: Cor do pirômetro
     Dado que "PI-12" tem a cor vermelha escolhida
@@ -283,7 +284,7 @@ Nenhuma em aberto.
 | Melhorias do gráfico | Aprovado, com cuidado para não quebrar o que existe | 2026-11-05 |
 | Intervalo de atualização automática | Manter 5 minutos (spec 001 RF-13): o sincronizador só traz dado novo nesse intervalo | 2026-11-05 |
 | Limite de "sem comunicação" | Não existe: a fábrica para fora do expediente; o tempo sem leitura já é a informação útil | 2026-11-05 |
-| Intervalo de lacuna do gráfico | 15 minutos entre pontos consecutivos | 2026-11-05 |
+| Intervalo de lacuna do gráfico | ~~15 minutos entre pontos consecutivos~~ **Substituído (emenda 2026-11-05): não há lacuna; a linha sempre liga as leituras e cada leitura tem um ponto** | 2026-11-05 |
 | Escolha de cor | Paleta fixa de 12 cores | 2026-11-05 |
 | Bateria baixa | Sem destaque; só mostra o valor | 2026-11-05 |
 | Ordem dos cards | Por nome mostrado (RF-04), ordem alfabética | 2026-11-05 |
@@ -296,6 +297,8 @@ Nenhuma em aberto.
 | Temperatura no card | Display de 7 segmentos em SVG próprio, valor real em texto acessível, traços sem leitura (emenda 2026-11-05) | 2026-11-05 |
 | Código do local (`reg_place`) | Fora de escopo agora; feature futura de cadastro/edição de "locais" (emenda 2026-11-05) | 2026-11-05 |
 | Display de 7 segmentos: tamanho e cor | Cerca de 33% maior; dígitos acesos em vermelho de LED, apagados em vermelho bem tênue, cor fixa que não indica alerta (emenda 2026-11-05) | 2026-11-05 |
+| Gráfico: linha e pontos | Sempre ligar os pontos com linha reta, sem quebra por intervalo, e um ponto pequeno por leitura (substitui a RF-10 de 15 min) | 2026-11-05 |
+| Miniatura (sparkline) do card | Removida a pedido do usuário; a consulta extra de série da última hora some junto (emenda 2026-11-05) | 2026-11-05 |
 | Exportação CSV | Fora de escopo por enquanto | 2026-11-05 |
 | E-mail e notificação | Fora de escopo | 2026-11-05 |
 

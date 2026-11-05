@@ -26,7 +26,7 @@ function lineNames(): string[] {
   );
 }
 
-/** A miniatura dos cards pede so a ultima hora; o grafico do dia pede de meia-noite a meia-noite. */
+/** O grafico do dia pede de meia-noite a meia-noite. */
 function dayWindowCalls(world: PainelWorld): URL[] {
   return world.api
     .callsTo('/api/readings/series')

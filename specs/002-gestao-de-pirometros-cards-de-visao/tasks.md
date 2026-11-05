@@ -172,6 +172,22 @@
 - [x] T140 Alterar o cenário `Temperatura em display de 7 segmentos` e o passo da cor em `app/tests/bdd/gestao-de-pirometros.feature` e `app/tests/bdd/steps/gestao-de-pirometros.steps.tsx`
 - [x] T141 `make validate` verde
 
+## Fase 10 — Emenda de 2026-11-05: gráfico sem quebra e com ponto por leitura (RF-10)
+
+- [x] T142 Teste unitário do mapeamento sem lacuna (leituras a 2 h continuam ligadas, sem `null`) em `app/tests/unit/core/domain/models/series-points.model.spec.ts` (substitui `series-gap.model.spec.ts`)
+- [x] T143 Renomear para `app/core/domain/models/series-points.model.ts` (só mapeia pontos), remover `SERIES_GAP_SECONDS` de `app/core/domain/constants/readings.constants.ts` e atualizar as importações em `app/adapters/presenters/components/Sparkline.tsx` e `TemperatureChart.tsx`
+- [x] T144 Teste unitário do gráfico (um ponto por leitura, uma só linha reta entre leituras espaçadas, ponto ativo maior) em `app/tests/unit/adapters/presenters/components/TemperatureChart.spec.tsx`
+- [x] T145 Alterar `app/adapters/presenters/components/TemperatureChart.tsx` (`type="linear"`, `dot`, `activeDot`)
+- [x] T146 Cenário `Leituras espaçadas aparecem ligadas por linha com um ponto cada` e passos em `app/tests/bdd/gestao-de-pirometros.feature` e `app/tests/bdd/steps/gestao-de-pirometros.steps.tsx` (remove os passos de lacuna)
+- [x] T147 `make validate` verde
+
+## Fase 11 — Emenda de 2026-11-05: remoção da miniatura dos cards (RF-06)
+
+- [x] T148 Testes unitários sem miniatura e sem a consulta extra em `app/tests/unit/adapters/presenters/components/PyrometerCard.spec.tsx`, `app/tests/unit/adapters/presenters/components/PyrometerCards.spec.tsx` e `app/tests/unit/adapters/presenters/pages/MonitoringPage.spec.tsx`; remover `app/tests/unit/adapters/presenters/components/Sparkline.spec.tsx`
+- [x] T149 Remover `app/adapters/presenters/components/Sparkline.tsx`; alterar `app/adapters/presenters/components/PyrometerCard.tsx`, `app/adapters/presenters/components/PyrometerCards.tsx` e `app/adapters/presenters/pages/MonitoringPage.tsx` (sem `lastHour`); remover `sparklineLabel` de `app/core/domain/constants/text-keys.constants.ts` e `app/infra/tools/i18n.tool.ts`
+- [x] T150 Alterar o cenário `Card por pirômetro ativo` (sem miniatura) em `app/tests/bdd/gestao-de-pirometros.feature` e os passos/`FakeApi` em `app/tests/bdd/steps/gestao-de-pirometros.steps.tsx`, `app/tests/bdd/steps/graficos.steps.tsx` e `app/tests/bdd/support/fake-api.ts`
+- [x] T151 `make validate` verde
+
 ## Rastreabilidade
 
 | Requisito | Tarefas |
@@ -181,11 +197,11 @@
 | RF-03 | T114, T115, T120, T008, T026, T027, T030, T031, T036, T037, T040, T041, T042, T043, T073, T076 |
 | RF-04 | T088, T089, T101, T009, T010, T046, T047, T052, T053, T054, T055, T056, T057, T074, T075 |
 | RF-05 | T002, T003, T041, T047, T053, T061, T081, T085 |
-| RF-06 | T124, T125, T126, T127, T128, T129, T130, T131, T133, T134, T135, T136, T019, T020, T024, T025, T034, T035, T044, T045, T046, T047, T048, T049, T079 |
+| RF-06 | T148, T149, T150, T124, T125, T126, T127, T128, T129, T130, T131, T133, T134, T135, T136, T019, T020, T024, T025, T034, T035, T044, T045, T046, T047, T048, T049, T079 |
 | RF-07 | T046, T047, T080 |
 | RF-08 | T009, T010, T047, T048, T049, T062, T063, T082 |
 | RF-09 | T004, T005, T011, T012, T028, T029, T038, T039, T050, T051, T083 |
-| RF-10 | T013, T014, T015, T016, T017, T018, T052, T053, T084 |
+| RF-10 | T142, T143, T144, T145, T146, T013, T014, T015, T016, T017, T018, T052, T053, T084 |
 | RF-11 | T009, T010, T062, T063, T064, T065, T077 |
 | RF-12 | T060, T061, T062, T063, T086 |
 | RF-13 | T021, T022, T013, T014 |
@@ -339,6 +355,44 @@ Tarefas acrescentadas: nenhuma
 **Excesso de escopo:** nenhum.
 
 **O que o jsdom não verifica (conferir na tela):** se o display 33% maior cabe bem nos cards de 4 colunas a 1280 px e nos de 2 colunas em telas estreitas (largura do display + unidade `°C` dentro do card); o contraste real do vermelho sobre o painel escuro e o brilho dos segmentos apagados (`opacity-15`) em monitores diferentes; e a legibilidade geral nos dois temas.
+
+Veredito: convergido
+Tarefas acrescentadas: nenhuma
+
+### Rodada 6 — 2026-11-05 (emenda: gráfico sem quebra e com ponto por leitura — RF-10 substituída)
+
+| Requisito | Estado | Evidência |
+|---|---|---|
+| RF-10 (emendada) | realizado | `app/core/domain/models/series-points.model.ts` (renomeado de `series-gap.model.ts`): `toChartPoints` só mapeia as leituras, sem inserir ponto vazio; `gapSeconds` e `SERIES_GAP_SECONDS` removidos (nenhum uso restante); `TemperatureChart.tsx`: `type="linear"`, `dot={{ r: 3 }}` e `activeDot={{ r: 5 }}` na cor da linha, `isAnimationActive={false}` e dados memoizados mantidos; testes unitários: leituras a 2 h/3 dias continuam ligadas e com um ponto cada, o `path` tem um só `M` e `L` (sem `C`), um `circle.recharts-line-dot` de `r=3` por leitura com `fill`/`stroke` na cor do pirômetro; BDD "Leituras espaçadas aparecem ligadas por linha com um ponto cada" |
+
+**`make validate` (saída real):** `fmt` e `lint` (eslint + tsc) sem erros nem avisos; 55 arquivos e **454 testes unitários** passaram (eram 450); cobertura "aprovada: 99.32% (mínimo 90.00%)"; **12 testes de integração** passaram; BDD **59 cenários e 355 passos** passaram (o cenário de lacuna foi substituído pelo novo; os passos de lacuna foram removidos).
+
+**Excesso de escopo:** nenhum (sem mudança em API, banco, cards ou tela de gestão; a miniatura do card só passou a usar o mesmo mapeamento sem quebra, e continua sem pontos).
+
+**Desvios e avisos:**
+1. Esta rodada **não** fez commit nem push (o coordenador pediu "sem commit"; o plano citava push na `main`, que implantaria).
+2. O BDD confere o mapeamento (as duas leituras recebidas, sem ponto vazio entre elas). Tentei exigir os dois pontos no DOM e falhou: no gráfico responsivo do BDD o jsdom não desenha traço nem pontos. Por isso a checagem de DOM saiu do BDD e o desenho (`path`, pontos, cor, raio) fica provado no teste unitário de tamanho fixo.
+3. A miniatura do card, com uma só leitura na última hora, mostra o ponto padrão do Recharts (um círculo branco com contorno); isso já existia e não faz parte desta emenda.
+
+**O que o jsdom não verifica (conferir em http://localhost:5173, Acompanhamento):** se o ponto de 3 px é visível e proporcional com muitas leituras (3 dias, ~8 mil pontos por pirômetro), ou se polui o gráfico; o ponto maior (`r=5`) e o tooltip ao passar o mouse; e o aspecto da linha reta (`linear`) entre leituras muito espaçadas.
+
+Veredito: convergido
+Tarefas acrescentadas: nenhuma
+
+### Rodada 7 — 2026-11-05 (emenda: remoção da miniatura dos cards — RF-06)
+
+| Requisito | Estado | Evidência |
+|---|---|---|
+| RF-06 (sem miniatura) | realizado | `app/adapters/presenters/components/Sparkline.tsx` e o spec removidos; `PyrometerCard.tsx` e `PyrometerCards.tsx` sem as props `points`/`series`; o card tem só nome (TAG - APELIDO), cor, display de 7 segmentos, data, bateria % e tempo sem leitura (teste `deve manter so nome, display, data, bateria e tempo sem leitura`, com um único `svg`, o do display); espaçamento `gap-1.5` e sem o bloco de 36 px da miniatura |
+| Consulta extra | removida | `MonitoringPage.tsx` não chama mais `useReadingsSeries(null, 'hour')` (era só para a miniatura) nem a inclui no erro/refazer; teste `deve fazer so a consulta do grafico quando abre` (uma chamada, `(null, 'today')`); o período "Última hora" do seletor do gráfico e `GetReadingsSeriesUseCase` continuam |
+| Textos e constantes | removidos | chave `sparklineLabel` fora de `text-keys.constants.ts` e `i18n.tool.ts`; nenhuma referência restante a `Sparkline`/`sparkline` no código (busca feita) |
+| BDD | atualizado | "Card por pirômetro ativo" passou de "E uma miniatura…" para "Mas o card não tem miniatura de temperaturas"; `FakeApi` e os passos deixaram de separar a janela da miniatura |
+
+**`make validate` (saída real):** `fmt` e `lint` (eslint + tsc) sem erros nem avisos; 54 arquivos e **453 testes unitários** passaram; cobertura "aprovada: 99.31% (mínimo 90.00%)"; **12 testes de integração** passaram; BDD **59 cenários e 355 passos** passaram.
+
+**Excesso de escopo:** nenhum. Sem mudança em API, banco ou gráfico principal.
+
+**O que o jsdom não verifica (conferir em http://localhost:5173, Acompanhamento):** se o card ficou sem espaço vazio embaixo e com altura boa nas 2, 3 e 4 colunas (cards de alturas diferentes na mesma linha, como um sem leitura, esticam até a altura do vizinho por causa do `h-full`); e se a grade com os cards mais baixos continua equilibrada com 10 pirômetros em 1366 px.
 
 Veredito: convergido
 Tarefas acrescentadas: nenhuma

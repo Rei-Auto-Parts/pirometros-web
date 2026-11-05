@@ -31,7 +31,6 @@ export interface FakeProfile {
   active: boolean;
 }
 
-const HOUR_SECONDS = 3600;
 const pad = (value: number): string => String(value).padStart(2, '0');
 
 /** "Agora" local em texto (o relogio falso do cenario vale aqui). */
@@ -212,13 +211,6 @@ export class FakeApi {
     };
   }
 
-  /** Duracao da janela pedida; a miniatura dos cards pede so a ultima hora. */
-  private windowSeconds(url: URL): number {
-    const start = toEpochSeconds(url.searchParams.get('start') ?? '');
-    const end = toEpochSeconds(url.searchParams.get('end') ?? '');
-    return end - start;
-  }
-
   private series(url: URL): object[] {
     const bySerial = new Map<string, FakeReading[]>();
     for (const r of [...this.selected(url)].reverse()) {
@@ -229,7 +221,7 @@ export class FakeApi {
       pyrometer_name: items[0]?.name ?? null,
       points: items.map((r) => ({ measured_at: r.measuredAt, temperature: r.temperature })),
     }));
-    if (this.windowSeconds(url) > HOUR_SECONDS) this.lastSeries = result;
+    this.lastSeries = result;
     return result;
   }
 }

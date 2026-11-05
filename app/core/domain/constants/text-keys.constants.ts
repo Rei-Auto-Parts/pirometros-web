@@ -74,7 +74,6 @@ export const TEXT_KEYS = {
   unitHours: 'unitHours',
   noSummary: 'noSummary',
   summaryCardsLabel: 'summaryCardsLabel',
-  sparklineLabel: 'sparklineLabel',
   temperatureUnit: 'temperatureUnit',
   colorBlue: 'colorBlue',
   colorRed: 'colorRed',

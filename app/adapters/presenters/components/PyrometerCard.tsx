@@ -1,6 +1,5 @@
 import { TEXT_KEYS } from '../../../core/domain/constants/text-keys.constants';
 import type { PyrometerDto } from '../../../core/domain/dtos/pyrometer.dto';
-import type { SeriesPointDto } from '../../../core/domain/dtos/pyrometer-series.dto';
 import type { PyrometerSummaryDto } from '../../../core/domain/dtos/pyrometer-summary.dto';
 import { splitMinutes } from '../../../core/domain/models/duration.model';
 import { displayName } from '../../../core/domain/models/pyrometer-name.model';
@@ -9,12 +8,10 @@ import { cn } from '../../../infra/tools/cn';
 import { t } from '../../../infra/tools/i18n.tool';
 import { BatteryIndicator } from './BatteryIndicator';
 import { SevenSegmentDisplay } from './SevenSegmentDisplay';
-import { Sparkline } from './Sparkline';
 
 interface PyrometerCardProps {
   readonly pyrometer: PyrometerDto;
   readonly summary: PyrometerSummaryDto | undefined;
-  readonly points: readonly SeriesPointDto[];
   readonly selected: boolean;
   readonly onSelect: () => void;
 }
@@ -34,13 +31,7 @@ function withoutReadingText(minutesTotal: number): string {
   return `${duration} ${t(TEXT_KEYS.withoutReading)}`;
 }
 
-export function PyrometerCard({
-  pyrometer,
-  summary,
-  points,
-  selected,
-  onSelect,
-}: PyrometerCardProps) {
+export function PyrometerCard({ pyrometer, summary, selected, onSelect }: PyrometerCardProps) {
   const name = displayName(pyrometer);
   return (
     <button
@@ -48,7 +39,7 @@ export function PyrometerCard({
       aria-pressed={selected}
       onClick={onSelect}
       className={cn(
-        'bg-card flex h-full w-full cursor-pointer flex-col gap-1 overflow-hidden rounded-lg border p-3 text-left shadow-sm',
+        'bg-card flex h-full w-full cursor-pointer flex-col gap-1.5 overflow-hidden rounded-lg border p-3 text-left shadow-sm',
         selected && 'ring-ring ring-2',
       )}
     >
@@ -79,11 +70,6 @@ export function PyrometerCard({
           <span className="text-xs">{withoutReadingText(summary.minutesWithoutReading)}</span>
         </>
       )}
-      <Sparkline
-        points={points}
-        color={pyrometer.color}
-        label={`${t(TEXT_KEYS.sparklineLabel)}: ${name}`}
-      />
     </button>
   );
 }

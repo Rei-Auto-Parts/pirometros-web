@@ -36,7 +36,6 @@ function renderCard(
     <PyrometerCard
       pyrometer={PYROMETER}
       summary={resolved}
-      points={[]}
       selected={props.selected ?? false}
       onSelect={props.onSelect ?? vi.fn()}
     />,
@@ -146,14 +145,27 @@ describe('PyrometerCard', () => {
     expect(low.querySelector('button')?.className).toBe(fullClass);
   });
 
-  it('deve incluir a miniatura com o nome no rotulo quando renderizado', () => {
+  it('deve nao ter miniatura nem grafico quando renderizado', () => {
+    // Arrange / Act
+    const { container } = renderCard();
+
+    // Assert
+    expect(screen.queryByRole('img')).toBeNull();
+    expect(container.querySelector('.recharts-wrapper')).toBeNull();
+  });
+
+  it('deve manter so nome, display, data, bateria e tempo sem leitura quando ha resumo', () => {
     // Arrange / Act
     renderCard();
 
     // Assert
-    expect(
-      screen.getByRole('img', { name: 'Temperaturas da última hora: PI-12 - Forno 2' }),
-    ).toBeInTheDocument();
+    const card = screen.getByRole('button');
+    expect(card).toHaveTextContent('PI-12 - Forno 2');
+    expect(card).toHaveTextContent('1510 °C');
+    expect(card).toHaveTextContent('05/11/2026 10:05');
+    expect(card).toHaveTextContent('Bateria 62%');
+    expect(card).toHaveTextContent('3 min sem leitura');
+    expect(card.querySelectorAll('svg')).toHaveLength(1);
   });
 
   it('deve mostrar a bateria em porcentagem com barra proporcional quando ha resumo', () => {
@@ -226,7 +238,6 @@ describe('PyrometerCard', () => {
       <PyrometerCard
         pyrometer={{ ...PYROMETER, color: '#16a34a' }}
         summary={summary({ temperature: 5000 })}
-        points={[]}
         selected={false}
         onSelect={vi.fn()}
       />,

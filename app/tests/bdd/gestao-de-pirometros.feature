@@ -50,7 +50,7 @@ Funcionalidade: Gestão de pirômetros, cards e gráfico
     E que agora são 10:08
     Quando eu abro o Acompanhamento
     Então o card de "PI-12" mostra 1510, a data 10:05, bateria 62% e "3 min sem leitura"
-    E uma miniatura das temperaturas da última hora
+    Mas o card não tem miniatura de temperaturas
 
   Cenário: Tempo sem leitura é só informação
     Dado que "PI-14" está sem leitura há 10 horas
@@ -77,11 +77,11 @@ Funcionalidade: Gestão de pirômetros, cards e gráfico
     Então o gráfico mostra só as seis últimas horas
     E o pirômetro filtrado continua o mesmo
 
-  Cenário: Lacuna aparece no gráfico
+  Cenário: Leituras espaçadas aparecem ligadas por linha com um ponto cada
     Dado que "PI-12" tem leituras às 10:00 e às 12:00 e nenhuma entre elas
     Quando eu vejo o gráfico
-    Então a linha de "PI-12" é interrompida entre 10:00 e 12:00 (mais de 15 minutos sem leitura)
-    Mas não é ligada por uma reta
+    Então a linha de "PI-12" liga a leitura das 10:00 à das 12:00 sem interrupção
+    E cada uma das duas leituras aparece como um ponto
 
   Cenário: Cor do pirômetro
     Dado que "PI-12" tem a cor vermelha escolhida
