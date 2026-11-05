@@ -78,4 +78,94 @@ describe('buildChartAxis', () => {
     const [low, high] = axis.domain;
     expect(axis.ticks.every((tick) => tick >= low && tick <= high)).toBe(true);
   });
+
+  describe('com a extensao real das leituras', () => {
+    const DAY = { start: '2026-11-05T00:00:00', end: '2026-11-05T23:59:59' };
+    const at = (value: string): number => toEpochSeconds(value);
+
+    it('deve ir da primeira a ultima leitura com folga minima de 5 minutos quando a extensao e curta', () => {
+      // Arrange
+      const extent = { min: at('2026-11-05T10:00:00'), max: at('2026-11-05T10:14:00') };
+
+      // Act
+      const axis = buildChartAxis(DAY, extent);
+
+      // Assert
+      expect(axis.domain).toEqual([at('2026-11-05T09:55:00'), at('2026-11-05T10:19:00')]);
+    });
+
+    it('deve usar folga de 2% da extensao quando a extensao e longa', () => {
+      // Arrange
+      const min = at('2026-11-05T00:00:00');
+      const extent = { min, max: min + 20 * 3600 };
+
+      // Act
+      const axis = buildChartAxis(DAY, extent);
+
+      // Assert
+      expect(axis.domain).toEqual([min - 1440, min + 20 * 3600 + 1440]);
+    });
+
+    it('deve abrir 5 minutos para cada lado quando ha uma leitura so', () => {
+      // Arrange
+      const instant = at('2026-11-05T10:00:00');
+
+      // Act
+      const axis = buildChartAxis(DAY, { min: instant, max: instant });
+
+      // Assert
+      expect(axis.domain).toEqual([instant - 300, instant + 300]);
+    });
+
+    it('deve marcar de 5 em 5 minutos dentro do dominio quando a extensao e de poucos minutos', () => {
+      // Arrange
+      const extent = { min: at('2026-11-05T10:00:00'), max: at('2026-11-05T10:14:00') };
+
+      // Act
+      const axis = buildChartAxis(DAY, extent);
+
+      // Assert
+      expect(axis.ticks.length).toBeGreaterThanOrEqual(3);
+      expect(axis.ticks.every((tick) => tick % 300 === 0)).toBe(true);
+      const [low, high] = axis.domain;
+      expect(axis.ticks.every((tick) => tick >= low && tick <= high)).toBe(true);
+    });
+
+    it('deve ignorar a janela do periodo quando ha leituras', () => {
+      // Arrange
+      const threeDays = { start: '2026-11-02T10:00:00', end: '2026-11-05T10:00:00' };
+      const extent = { min: at('2026-11-05T09:00:00'), max: at('2026-11-05T10:00:00') };
+
+      // Act
+      const axis = buildChartAxis(threeDays, extent);
+
+      // Assert
+      expect(axis.domain[0]).toBeGreaterThan(at('2026-11-05T08:00:00'));
+      expect(axis.withDate).toBe(false);
+    });
+
+    it('deve mostrar a data nas marcas quando as leituras cruzam a meia-noite', () => {
+      // Arrange
+      const extent = { min: at('2026-11-04T22:00:00'), max: at('2026-11-05T02:00:00') };
+
+      // Act
+      const axis = buildChartAxis(DAY, extent);
+
+      // Assert
+      expect(axis.withDate).toBe(true);
+    });
+
+    it('deve usar a janela do periodo quando nao ha extensao', () => {
+      // Act
+      const withoutExtent = buildChartAxis(DAY);
+      const withNull = buildChartAxis(DAY, null);
+
+      // Assert
+      expect(withNull).toEqual(withoutExtent);
+      expect(withNull.domain).toEqual([
+        at('2026-11-05T00:00:00'),
+        at('2026-11-05T00:00:00') + 86400,
+      ]);
+    });
+  });
 });

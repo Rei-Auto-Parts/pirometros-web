@@ -71,7 +71,7 @@
 |---|---|---|
 | Ligação | `toChartPoints` só mapeia as leituras para `{ x, temperature }`; nenhum ponto `null` é inserido e `gapSeconds` e `SERIES_GAP_SECONDS` deixam de existir | RF-10 emendada: leituras espaçadas não podem sumir |
 | Nome do modelo | `series-gap.model.ts` → `series-points.model.ts` (o modelo não trata mais lacuna) | Só 3 importações (gráfico, miniatura, passo BDD) |
-| Traço | `type="linear"` (reta entre leituras) em vez de `monotone`, para não inventar curva entre leituras distantes | Plano aprovado |
+| Traço | ~~`type="linear"`~~ **substituído pela emenda abaixo** (`monotone`) | — |
 | Pontos | `dot={{ r: 3 }}` e `activeDot={{ r: 5 }}` na cor da linha; `isAnimationActive={false}` e dados memoizados mantidos | Cada leitura visível; sem re-registro da série |
 | Miniatura dos cards | Removida (ver a emenda de 2026-11-05 abaixo) | — |
 
@@ -88,6 +88,29 @@
 | BDD | `FakeApi` deixa de separar a janela da miniatura (todo `lastSeries` é do gráfico); passos que filtravam por janela simplificados | A miniatura era a única consulta de janela curta |
 
 **Arquivos da emenda:** `adapters/presenters/components/Sparkline.tsx` (removido), `PyrometerCard.tsx`, `PyrometerCards.tsx`, `adapters/presenters/pages/MonitoringPage.tsx`, `core/domain/constants/text-keys.constants.ts`, `infra/tools/i18n.tool.ts`, e os testes e BDD correspondentes.
+
+## Emenda de 2026-11-05: eixos ajustados aos dados (RF-20, RF-09, RF-10)
+
+| Decisão | Escolha | Por quê |
+|---|---|---|
+| Eixo de temperatura | Função pura `buildValueAxis(valores)` em `core/domain/models/value-axis.model.ts`: sem valores devolve `null` (o gráfico usa o padrão); com valores, `[mín − margem, máx + margem]` com margem `max(5% da amplitude, 20)`, arredondando para baixo/cima a múltiplos de 50 (de 10 quando a faixa total é menor que 200); nunca clampa em 0 | RF-20; legibilidade |
+| Eixo de horário | `buildChartAxis(período, extensão?)`: com extensão (primeiro e último `x` exibidos), domínio `[mín − folga, máx + folga]` com folga `max(2% da extensão, 300 s)`; sem extensão, a janela do período como antes. A data aparece nas marcas quando o domínio cruza a meia-noite (calculado pelo dia da época, não pelo texto do período) | O seletor continua definindo quais leituras vêm; o eixo mostra só o que veio |
+| Marcas | `STEPS` ganha um degrau de 5 min para extensões até 30 min; os demais (15 min, 1 h, 3 h, 12 h) não mudam | Extensões curtas ainda ganham marcas |
+| Ponto | `r=3`; `r=2` quando o total de pontos visíveis passa de 200; `activeDot` segue `r=5`; linha reta e tooltip mantidos | RF-10 |
+| Onde calcula | `TemperatureChart` calcula extensão e domínio a partir das séries recebidas (já filtradas por período, pirômetro e ativos) e memoiza | Sem mudar página nem API |
+
+**Arquivos da emenda:** `core/domain/models/value-axis.model.ts` (novo, +spec), `core/domain/models/chart-axis.model.ts` (+spec), `adapters/presenters/components/TemperatureChart.tsx` (+spec), e o BDD (`gestao-de-pirometros.feature` e `.steps.tsx`).
+
+## Emenda de 2026-11-05: linha suavizada, mais grossa e arredondada (RF-10)
+
+| Decisão | Escolha | Por quê |
+|---|---|---|
+| Tipo da linha | `type="monotone"` (monotoneX do Recharts): curva cúbica monotônica, passa por todas as leituras e **não ultrapassa os valores medidos** entre duas leituras | Substitui o `linear` (que evitava curva inventada); a monotônica não inventa picos nem vales |
+| Traço | `strokeWidth={2.5}`, `strokeLinecap="round"`, `strokeLinejoin="round"` | Pedido do usuário ("mais grossa e arredondadinha") |
+| Mantidos | Pontos (`r=3`, `r=2` acima de 200), `activeDot` `r=5`, eixos ajustados, tooltip, cor por pirômetro, `isAnimationActive={false}` e dados memoizados | Sem outras mudanças |
+| Risco | Rajadas com muitos pontos: traço grosso mais pontos podem virar mancha | Verificado em captura (Todos e PI-15 isolado); o ponto já encolhe a `r=2` acima de 200 pontos |
+
+**Arquivos da emenda:** `adapters/presenters/components/TemperatureChart.tsx` (+spec) e o spec/plan/tasks; o BDD não cita o tipo da linha.
 
 ## Padrões de projeto aplicados
 

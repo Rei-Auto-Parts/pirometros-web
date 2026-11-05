@@ -188,6 +188,23 @@
 - [x] T150 Alterar o cenário `Card por pirômetro ativo` (sem miniatura) em `app/tests/bdd/gestao-de-pirometros.feature` e os passos/`FakeApi` em `app/tests/bdd/steps/gestao-de-pirometros.steps.tsx`, `app/tests/bdd/steps/graficos.steps.tsx` e `app/tests/bdd/support/fake-api.ts`
 - [x] T151 `make validate` verde
 
+## Fase 12 — Emenda de 2026-11-05: eixos ajustados aos dados (RF-20)
+
+- [x] T152 Teste unitário de `buildValueAxis` (sem dados, faixa 1480–1700, valor único, faixa estreita, nunca de 0) em `app/tests/unit/core/domain/models/value-axis.model.spec.ts`
+- [x] T153 Criar `app/core/domain/models/value-axis.model.ts`
+- [x] T154 Teste unitário de `buildChartAxis` com extensão (folga de 2% e mínimo de 5 min, ponto único, marcas de 5 min, data pelo dia, sem dados = janela) em `app/tests/unit/core/domain/models/chart-axis.model.spec.ts`
+- [x] T155 Alterar `app/core/domain/models/chart-axis.model.ts`
+- [x] T156 Teste unitário do gráfico (eixo Y não parte de 0, eixo X só nos dados, sem dados usa a janela, `r=2` acima de 200 pontos, `r=3` até 200) em `app/tests/unit/adapters/presenters/components/TemperatureChart.spec.tsx`
+- [x] T157 Alterar `app/adapters/presenters/components/TemperatureChart.tsx`
+- [x] T158 Cenário `Eixos ajustados aos dados visíveis` e passos em `app/tests/bdd/gestao-de-pirometros.feature` e `app/tests/bdd/steps/gestao-de-pirometros.steps.tsx`
+- [x] T159 Verificação visual com Chromium (Todos e PI-15 isolado) e `make validate` verde
+
+## Fase 13 — Emenda de 2026-11-05: linha suavizada, mais grossa e arredondada (RF-10)
+
+- [x] T160 Teste unitário do gráfico (espessura 2,5, pontas e junções arredondadas, curva monotônica por `C`, sem ultrapassar os valores medidos, um só trecho) em `app/tests/unit/adapters/presenters/components/TemperatureChart.spec.tsx`
+- [x] T161 Alterar `app/adapters/presenters/components/TemperatureChart.tsx` (`type="monotone"`, `strokeWidth`, `strokeLinecap`, `strokeLinejoin`)
+- [x] T162 Conferir o BDD (nenhum passo cita o tipo da linha) e verificação visual com Chromium (Todos e PI-15 isolado); `make validate` verde
+
 ## Rastreabilidade
 
 | Requisito | Tarefas |
@@ -201,7 +218,8 @@
 | RF-07 | T046, T047, T080 |
 | RF-08 | T009, T010, T047, T048, T049, T062, T063, T082 |
 | RF-09 | T004, T005, T011, T012, T028, T029, T038, T039, T050, T051, T083 |
-| RF-10 | T142, T143, T144, T145, T146, T013, T014, T015, T016, T017, T018, T052, T053, T084 |
+| RF-20 | T152, T153, T154, T155, T156, T157, T158, T159 |
+| RF-10 | T160, T161, T162, T142, T143, T144, T145, T146, T013, T014, T015, T016, T017, T018, T052, T053, T084 |
 | RF-11 | T009, T010, T062, T063, T064, T065, T077 |
 | RF-12 | T060, T061, T062, T063, T086 |
 | RF-13 | T021, T022, T013, T014 |
@@ -393,6 +411,54 @@ Tarefas acrescentadas: nenhuma
 **Excesso de escopo:** nenhum. Sem mudança em API, banco ou gráfico principal.
 
 **O que o jsdom não verifica (conferir em http://localhost:5173, Acompanhamento):** se o card ficou sem espaço vazio embaixo e com altura boa nas 2, 3 e 4 colunas (cards de alturas diferentes na mesma linha, como um sem leitura, esticam até a altura do vizinho por causa do `h-full`); e se a grade com os cards mais baixos continua equilibrada com 10 pirômetros em 1366 px.
+
+Veredito: convergido
+Tarefas acrescentadas: nenhuma
+
+### Rodada 8 — 2026-11-05 (emenda: eixos ajustados aos dados — RF-20, RF-09 e RF-10)
+
+| Requisito | Estado | Evidência |
+|---|---|---|
+| RF-20 — eixo de temperatura | realizado | `app/core/domain/models/value-axis.model.ts`: `[mín − margem, máx + margem]`, margem `max(5%, 20)`, limites em múltiplos de 50 (10 quando a faixa total é menor que 200), nunca de 0; sem valores devolve `null` (padrão); `TemperatureChart.tsx` passa o domínio ao `YAxis` (`allowDecimals={false}`); testes do modelo (1480–1700 → 1450–1750, valor único, faixa estreita, 60–80) e do gráfico (marcas entre 1450 e 1750) |
+| RF-20 — eixo de horário | realizado | `app/core/domain/models/chart-axis.model.ts`: `buildChartAxis(período, extensão?)` vai da primeira à última leitura com folga `max(2%, 5 min)`; sem extensão usa a janela do período; `STEPS` ganhou o degrau de 5 min (até 30 min); `withDate` pelo dia da época; testes do modelo e do gráfico (marcas só entre 09:55 e 10:20; data nas marcas só quando as leituras cruzam dias) |
+| RF-09 | realizado | o seletor continua definindo a janela buscada (BDD confere que a consulta segue `T00:00:00`–`T23:59:59` com "Hoje" pressionado); o eixo mostra só o que veio |
+| RF-10 | realizado | linha reta e ponto `r=3` mantidos; `r=2` quando o total de pontos visíveis passa de 200 (`r=3` até 200 e contando as séries somadas), `activeDot` `r=5`, tooltip mantido; testes |
+| BDD | atualizado | cenário "Eixos ajustados aos dados visíveis" (eixo 1450–1750, horário 09:55–10:19, período "Hoje" busca o dia) |
+
+**`make validate` (saída real):** `fmt` e `lint` (eslint + tsc) sem erros nem avisos; 55 arquivos e **476 testes unitários** passaram (eram 453); cobertura "aprovada: 99.36% (mínimo 90.00%)"; **12 testes de integração** passaram; BDD **60 cenários e 362 passos** passaram.
+
+**Verificação visual (Chromium headless no container dev, 1366 px, tema claro):**
+1. **Todos** (PI-12/13/14 com 36 leituras a cada 10 min em 6 h e PI-15 com 3 leituras): eixo de temperatura de 1460 a 1570 °C (não parte de 0), eixo de horário de ~10:12 a 16:00 com marcas de hora em hora, quatro linhas retas ligando todos os pontos, um ponto por leitura (r=2, ~140 pontos) e a linha continua bem visível; as rajadas de leituras ocupam a largura inteira.
+2. **PI-15 isolado** (3 leituras em 14 min): eixo de horário de ~15:42 a 16:05 com marcas de 5 em 5 min, eixo de temperatura de 1500 a 1560 °C, a linha ligando os 3 pontos de forma legível (ponto r=3).
+3. A captura de PI-15 usou uma edição temporária no estado inicial de `MonitoringPage.tsx`, já restaurada (conferido com `diff`: sem resíduo no código).
+
+**Excesso de escopo:** nenhum (sem mudança em API, banco, cards ou tela de gestão).
+
+**Avisos e o que o jsdom ou a captura não cobrem:**
+1. O Recharts não desenha rótulos de eixo com zero pontos, então "sem dados usa a janela" é provado no teste do modelo (`buildChartAxis` sem extensão), não no gráfico; a página nem renderiza o gráfico nesse caso (mostra "Nenhuma leitura…").
+2. As marcas do eixo de temperatura são escolhidas pelo Recharts e saem em passos irregulares (ex.: 1460, 1490, 1520, 1550, 1570, ou 1500, 1515, 1530…): ficam legíveis, mas poderiam ser "redondas". Não mexi para manter o pedido (múltiplos de 10 ou 50 só nos limites do domínio).
+3. Não verifiquei visualmente: o tema escuro, o gráfico com 3 dias e centenas de pontos por pirômetro, nem o tooltip e o ponto ativo (`r=5`), que dependem de passar o mouse.
+
+Veredito: convergido
+Tarefas acrescentadas: nenhuma
+
+### Rodada 9 — 2026-11-05 (emenda: linha suavizada, mais grossa e arredondada — RF-10)
+
+| Requisito | Estado | Evidência |
+|---|---|---|
+| RF-10 (linha) | realizado | `app/adapters/presenters/components/TemperatureChart.tsx`: `type="monotone"` (substitui `linear`), `strokeWidth={2.5}`, `strokeLinecap="round"`, `strokeLinejoin="round"`; mantidos pontos `r=3` (`r=2` acima de 200 pontos visíveis), `activeDot` `r=5`, eixos ajustados, tooltip, cor por pirômetro, `isAnimationActive={false}` e dados memoizados; testes: atributos `stroke-width="2.5"`, `stroke-linecap`/`stroke-linejoin` `round`; trecho único de curvas cúbicas (`C`) com 3 curvas para 4 leituras, com ou sem lacuna grande; **todas as coordenadas do `path` ficam dentro do intervalo dos pontos medidos** (série com patamares 1500/1700/1500: sem pico nem vale inventado); um ponto por leitura |
+| BDD | sem alteração | nenhum passo cita o tipo ou a espessura da linha (conferido por busca); os 60 cenários seguem passando |
+
+**`make validate` (saída real):** `fmt` e `lint` (eslint + tsc) sem erros nem avisos; 55 arquivos e **479 testes unitários** passaram (eram 476); cobertura "aprovada" (≥ 90%); **12 testes de integração** passaram; BDD **60 cenários e 362 passos** passaram.
+
+**Verificação visual (Chromium headless no container dev, 1366 px, tema claro):**
+1. **Todos** (PI-12/13/14 com 36 leituras a cada 10 min e PI-15 com 3): linhas visivelmente mais grossas, suaves, com pontas arredondadas, cada uma passando por todos os pontos (r=2, ~140 pontos); as subidas e descidas em rajada continuam legíveis e não viram mancha; sem picos ou vales além dos valores medidos.
+2. **PI-15 isolado** (3 leituras em 14 min): traço grosso e limpo ligando os 3 pontos (r=3); com só 3 pontos praticamente descendentes a curva monotônica fica quase reta, como esperado.
+3. A captura de PI-15 usou uma edição temporária do estado inicial de `MonitoringPage.tsx`, restaurada e conferida por `diff` (sem resíduo).
+
+**Excesso de escopo:** nenhum.
+
+**O que as capturas e o jsdom não cobrem:** tema escuro; 3 dias com centenas de pontos por pirômetro (a r=2 e traço de 2,5 px pode adensar mais); e o aspecto do tooltip e do ponto ativo (`r=5`), que dependem de passar o mouse.
 
 Veredito: convergido
 Tarefas acrescentadas: nenhuma

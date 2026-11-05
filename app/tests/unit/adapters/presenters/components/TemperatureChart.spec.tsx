@@ -27,6 +27,29 @@ function seriesOf(points: [string, number][]): PyrometerSeriesDto[] {
   ];
 }
 
+function xTicks(container: HTMLElement): string[] {
+  return [
+    ...container.querySelectorAll(
+      '.recharts-xAxis-tick-labels .recharts-cartesian-axis-tick-value',
+    ),
+  ].map((tick) => tick.textContent ?? '');
+}
+
+function yTicks(container: HTMLElement): number[] {
+  return [
+    ...container.querySelectorAll(
+      '.recharts-yAxis-tick-labels .recharts-cartesian-axis-tick-value',
+    ),
+  ].map((tick) => Number.parseInt(tick.textContent ?? '', 10));
+}
+
+function manyPoints(count: number): [string, number][] {
+  return Array.from({ length: count }, (_, index) => [
+    `2026-11-04T${String(Math.floor(index / 60)).padStart(2, '0')}:${String(index % 60).padStart(2, '0')}:00`,
+    1500 + (index % 40),
+  ]);
+}
+
 describe('TemperatureChart', () => {
   it('deve mostrar uma entrada na legenda por pirometro quando ha duas series', () => {
     // Arrange
@@ -130,9 +153,12 @@ describe('TemperatureChart', () => {
     ).not.toBeNull();
   });
 
-  it('deve renderizar o periodo de tres dias com data nas marcas quando o periodo cruza dias', () => {
+  it('deve mostrar data e hora nas marcas quando as leituras vao de um dia a outro', () => {
     // Arrange
-    const series = [buildSeries('SN-1', 'Forno 1')];
+    const series = seriesOf([
+      ['2026-11-02T10:00:00', 700],
+      ['2026-11-05T10:00:00', 720],
+    ]);
     const period = { start: '2026-11-02T10:00:00', end: '2026-11-05T10:00:00' };
 
     // Act
@@ -141,35 +167,82 @@ describe('TemperatureChart', () => {
     );
 
     // Assert
-    const ticks = [
-      ...container.querySelectorAll(
-        '.recharts-xAxis-tick-labels .recharts-cartesian-axis-tick-value',
-      ),
-    ];
+    const ticks = xTicks(container);
     expect(ticks.length).toBeGreaterThan(0);
-    expect(ticks.every((tick) => /^\d\d\/\d\d \d\d:\d\d$/.test(tick.textContent ?? ''))).toBe(true);
+    expect(ticks.every((tick) => /^\d\d\/\d\d \d\d:\d\d$/.test(tick))).toBe(true);
   });
 
-  it('deve mostrar so a hora nas marcas quando o periodo e de um dia', () => {
+  it('deve mostrar so a hora nas marcas quando as leituras ficam no mesmo dia', () => {
     // Arrange
-    const series = [buildSeries('SN-1', 'Forno 1')];
-    const period = { start: '2026-11-04T00:00:00', end: '2026-11-04T23:59:59' };
+    const series = seriesOf([
+      ['2026-11-04T10:00:00', 700],
+      ['2026-11-04T14:00:00', 720],
+    ]);
 
     // Act
     const { container } = render(
-      <TemperatureChart series={series} period={period} width={800} height={400} />,
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
     );
 
     // Assert
-    const ticks = [
-      ...container.querySelectorAll(
-        '.recharts-xAxis-tick-labels .recharts-cartesian-axis-tick-value',
-      ),
-    ];
-    expect(ticks.map((tick) => tick.textContent)).toContain('12:00');
+    expect(xTicks(container)).toContain('12:00');
   });
 
-  it('deve ligar duas leituras espacadas por uma unica reta quando ha horas entre elas', () => {
+  it('deve cobrir so a extensao das leituras no eixo de horario quando ha leituras', () => {
+    // Arrange
+    const series = seriesOf([
+      ['2026-11-04T10:00:00', 1480],
+      ['2026-11-04T10:07:00', 1600],
+      ['2026-11-04T10:14:00', 1700],
+    ]);
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    const ticks = xTicks(container);
+    expect(ticks.length).toBeGreaterThanOrEqual(3);
+    expect(ticks.every((tick) => tick >= '09:55' && tick <= '10:20')).toBe(true);
+    expect(ticks).not.toContain('00:00');
+  });
+
+  it('deve nao partir de 0 no eixo de temperatura quando as leituras sao altas', () => {
+    // Arrange
+    const series = seriesOf([
+      ['2026-11-04T10:00:00', 1480],
+      ['2026-11-04T10:07:00', 1600],
+      ['2026-11-04T10:14:00', 1700],
+    ]);
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    const ticks = yTicks(container);
+    expect(ticks.length).toBeGreaterThan(1);
+    expect(Math.min(...ticks)).toBeGreaterThanOrEqual(1450);
+    expect(Math.max(...ticks)).toBeLessThanOrEqual(1750);
+  });
+
+  it('deve renderizar sem quebrar e sem pontos quando o pirometro nao tem leituras', () => {
+    // Arrange
+    const series = seriesOf([]);
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    expect(container.querySelectorAll('.recharts-line-dot')).toHaveLength(0);
+    expect(screen.getByRole('img', { name: 'Gráfico de temperaturas' })).toBeInTheDocument();
+  });
+
+  it('deve ligar duas leituras espacadas por um unico trecho quando ha horas entre elas', () => {
     // Arrange
     const series = seriesOf([
       ['2026-11-04T10:00:00', 700],
@@ -205,10 +278,10 @@ describe('TemperatureChart', () => {
     // Assert
     const d = container.querySelector('.recharts-line-curve')?.getAttribute('d') ?? '';
     expect(d.match(/M/g)).toHaveLength(1);
-    expect(d.match(/L/g)).toHaveLength(3);
+    expect(d.match(/C/g)).toHaveLength(3);
   });
 
-  it('deve desenhar um trecho so de retas quando as leituras estao a 5 minutos uma da outra', () => {
+  it('deve desenhar um trecho so de curvas quando as leituras estao a 5 minutos uma da outra', () => {
     // Arrange
     const series = seriesOf([
       ['2026-11-04T10:00:00', 700],
@@ -225,7 +298,7 @@ describe('TemperatureChart', () => {
     // Assert
     const d = container.querySelector('.recharts-line-curve')?.getAttribute('d') ?? '';
     expect(d.match(/M/g)).toHaveLength(1);
-    expect(d).not.toMatch(/C/);
+    expect(d.match(/C/g)).toHaveLength(3);
   });
 
   it('deve mostrar um ponto pequeno por leitura mesmo quando as leituras estao a horas de distancia', () => {
@@ -301,5 +374,121 @@ describe('TemperatureChart', () => {
 
     // Assert
     expect(performance.now() - startedAt).toBeLessThan(2000);
+  });
+
+  it('deve usar ponto de raio 3 quando ha ate 200 pontos visiveis', () => {
+    // Arrange
+    const series = seriesOf(manyPoints(200));
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    const dots = container.querySelectorAll('.recharts-line-dot');
+    expect(dots).toHaveLength(200);
+    expect(dots[0]?.getAttribute('r')).toBe('3');
+  });
+
+  it('deve reduzir o ponto para raio 2 e manter a linha quando ha mais de 200 pontos visiveis', () => {
+    // Arrange
+    const series = seriesOf(manyPoints(201));
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    expect(container.querySelector('.recharts-line-dot')?.getAttribute('r')).toBe('2');
+    expect(container.querySelector('.recharts-line-curve')?.getAttribute('d')).toMatch(/C/);
+  });
+
+  it('deve contar os pontos de todas as series quando ha varios pirometros', () => {
+    // Arrange
+    const series = [
+      ...seriesOf(manyPoints(120)),
+      {
+        ...seriesOf(manyPoints(120))[0],
+        pyrometerId: 'SN-2',
+        pyrometerName: 'Forno 2',
+      } as PyrometerSeriesDto,
+    ];
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    expect(container.querySelector('.recharts-line-dot')?.getAttribute('r')).toBe('2');
+  });
+
+  it('deve usar traco grosso com pontas e juncoes arredondadas quando desenha a linha', () => {
+    // Arrange
+    const series = seriesOf([
+      ['2026-11-04T10:00:00', 700],
+      ['2026-11-04T10:05:00', 720],
+      ['2026-11-04T10:10:00', 710],
+    ]);
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    const curve = container.querySelector('.recharts-line-curve');
+    expect(curve?.getAttribute('stroke-width')).toBe('2.5');
+    expect(curve?.getAttribute('stroke-linecap')).toBe('round');
+    expect(curve?.getAttribute('stroke-linejoin')).toBe('round');
+  });
+
+  it('deve suavizar com curvas cubicas, passando por todas as leituras, quando ha tres ou mais leituras', () => {
+    // Arrange
+    const series = seriesOf([
+      ['2026-11-04T10:00:00', 700],
+      ['2026-11-04T10:05:00', 720],
+      ['2026-11-04T10:10:00', 710],
+    ]);
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    const d = container.querySelector('.recharts-line-curve')?.getAttribute('d') ?? '';
+    expect(d).toMatch(/C/);
+    expect(container.querySelectorAll('.recharts-line-dot')).toHaveLength(3);
+  });
+
+  it('deve nunca ultrapassar os valores medidos entre duas leituras quando a curva e suavizada', () => {
+    // Arrange
+    const series = seriesOf([
+      ['2026-11-04T10:00:00', 1500],
+      ['2026-11-04T10:05:00', 1500],
+      ['2026-11-04T10:10:00', 1700],
+      ['2026-11-04T10:15:00', 1700],
+      ['2026-11-04T10:20:00', 1500],
+      ['2026-11-04T10:25:00', 1500],
+    ]);
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    const ys = [...container.querySelectorAll('.recharts-line-dot')].map((dot) =>
+      Number(dot.getAttribute('cy')),
+    );
+    const d = container.querySelector('.recharts-line-curve')?.getAttribute('d') ?? '';
+    const numbers = (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+    const pathYs = numbers.filter((_, index) => index % 2 === 1);
+    const epsilon = 0.01;
+    expect(Math.min(...pathYs)).toBeGreaterThanOrEqual(Math.min(...ys) - epsilon);
+    expect(Math.max(...pathYs)).toBeLessThanOrEqual(Math.max(...ys) + epsilon);
   });
 });

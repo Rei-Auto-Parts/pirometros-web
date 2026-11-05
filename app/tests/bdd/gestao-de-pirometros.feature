@@ -172,3 +172,10 @@ Funcionalidade: Gestão de pirômetros, cards e gráfico
     Então o card de "PI-14" mostra "---" em display de 7 segmentos
     E mostra "Sem leituras com temperatura"
 
+  Cenário: Eixos ajustados aos dados visíveis
+    Dado que "PI-12" tem leituras entre 10:00 e 10:14 com temperaturas de 1480 a 1700
+    Quando eu vejo o gráfico
+    Então o eixo de temperatura vai de 1450 a 1750 e não parte de 0
+    E o eixo de horário cobre de 09:55 a 10:19, só a extensão das leituras
+    Mas o período "Hoje" continua definindo quais leituras são buscadas
+

@@ -3,7 +3,9 @@ import { Given, Then, When } from '@cucumber/cucumber';
 import { fireEvent, screen, within } from '@testing-library/react';
 import { PYROMETER_PALETTE } from '../../../core/domain/constants/pyrometer-profile.constants';
 import { toEpochSeconds } from '../../../core/domain/models/reg-date.model';
+import { buildChartAxis } from '../../../core/domain/models/chart-axis.model';
 import { toChartPoints } from '../../../core/domain/models/series-points.model';
+import { buildValueAxis } from '../../../core/domain/models/value-axis.model';
 import type { PainelWorld } from '../support/painel-world';
 
 const SERIAL: Record<string, string> = { 'PI-12': 'S-12', 'PI-14': 'S-14', 'PI-15': 'S-15' };
@@ -838,3 +840,66 @@ Then('a cor não depende da cor do pirômetro nem da temperatura', function (thi
   assert.equal(panel.style.backgroundColor, '');
   assert.ok(!panel.className.includes('amber'));
 });
+
+// ---- Emenda de 2026-11-05: eixos ajustados aos dados
+
+Given(
+  'que {string} tem leituras entre {word} e {word} com temperaturas de {int} a {int}',
+  function (
+    this: PainelWorld,
+    name: string,
+    first: string,
+    last: string,
+    low: number,
+    high: number,
+  ) {
+    seed(this, name, first, low);
+    seed(this, name, last, high);
+  },
+);
+
+/** O jsdom nao desenha os eixos no grafico responsivo: confere os dominios que o grafico calcula com as leituras recebidas. */
+function receivedAxes(world: PainelWorld) {
+  const chartCall = chartCalls(world).at(-1);
+  const period = {
+    start: chartCall?.searchParams.get('start') ?? '',
+    end: chartCall?.searchParams.get('end') ?? '',
+  };
+  const points = toChartPoints(receivedPoints(world, 'PI-12'));
+  const xs = points.map((point) => point.x);
+  return {
+    period,
+    value: buildValueAxis(points.map((point) => point.temperature)),
+    time: buildChartAxis(period, { min: Math.min(...xs), max: Math.max(...xs) }),
+  };
+}
+
+Then(
+  'o eixo de temperatura vai de {int} a {int} e não parte de 0',
+  async function (this: PainelWorld, low: number, high: number) {
+    await this.eventually(() => assert.deepEqual(legendNames(), ['PI-12']));
+    const { value } = receivedAxes(this);
+    assert.deepEqual(value, [low, high]);
+    assert.ok((value?.[0] ?? 0) > 0);
+  },
+);
+
+Then(
+  'o eixo de horário cobre de {word} a {word}, só a extensão das leituras',
+  function (this: PainelWorld, from: string, to: string) {
+    const { time } = receivedAxes(this);
+    assert.deepEqual(time.domain, [
+      toEpochSeconds(`${DAY}T${from}:00`),
+      toEpochSeconds(`${DAY}T${to}:00`),
+    ]);
+  },
+);
+
+Then(
+  'o período {string} continua definindo quais leituras são buscadas',
+  function (this: PainelWorld, label: string) {
+    assert.ok(screen.getByRole('button', { name: label, pressed: true }));
+    const { period } = receivedAxes(this);
+    assert.deepEqual(period, { start: `${DAY}T00:00:00`, end: `${DAY}T23:59:59` });
+  },
+);
