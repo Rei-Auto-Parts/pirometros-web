@@ -179,3 +179,16 @@ Funcionalidade: Gestão de pirômetros, cards e gráfico
     E o eixo de horário cobre de 09:55 a 10:19, só a extensão das leituras
     Mas o período "Hoje" continua definindo quais leituras são buscadas
 
+  Cenário: Tema escolhido persiste ao recarregar
+    Dado que abri o sistema
+    E que alterno para o tema escuro
+    Quando eu recarrego a página
+    Então o sistema abre no tema escuro
+    Mas sem escolha salva o sistema abre no tema claro
+
+  Cenário: Armazenamento indisponível não quebra o tema
+    Dado que o navegador não permite guardar a escolha
+    Quando eu abro o sistema e alterno para o tema escuro
+    Então o tema escuro vale na sessão
+    Mas nenhum erro aparece na tela
+

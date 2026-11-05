@@ -25,6 +25,11 @@ import { t } from '../../../infra/tools/i18n.tool';
 const DEFAULT_HEIGHT = 420;
 /** Acima disto, o ponto encolhe (raio 2) para nao virar uma mancha; a linha continua visivel. */
 const MANY_POINTS = 200;
+/**
+ * Acima disto (pontos visiveis, somando as series) nao se desenha ponto algum: um `<circle>` por leitura
+ * pesa no desenho e vira mancha. A linha suave e o ponto ativo (ao passar o mouse) continuam.
+ */
+const MAX_DOT_POINTS = 500;
 const DOT_RADIUS = 3;
 const DOT_RADIUS_DENSE = 2;
 const ACTIVE_DOT_RADIUS = 5;
@@ -47,7 +52,7 @@ interface ChartLine {
 function renderLines(
   lines: readonly ChartLine[],
   pyrometers: readonly PyrometerDto[],
-  radius: number,
+  radius: number | null,
 ): ReactElement[] {
   return lines.map(({ item, data }, index) => {
     const color =
@@ -64,7 +69,7 @@ function renderLines(
         strokeLinecap="round"
         strokeLinejoin="round"
         stroke={color}
-        dot={{ r: radius, fill: color, stroke: color }}
+        dot={radius === null ? false : { r: radius, fill: color, stroke: color }}
         activeDot={{ r: ACTIVE_DOT_RADIUS, fill: color, stroke: color }}
         isAnimationActive={false}
       />
@@ -77,7 +82,7 @@ function renderChart(
   pyrometers: readonly PyrometerDto[],
   axis: ChartAxis,
   valueDomain: readonly [number, number] | null,
-  radius: number,
+  radius: number | null,
   width?: number,
   height?: number,
 ): ReactElement {
@@ -102,6 +107,12 @@ function renderChart(
       {renderLines(lines, pyrometers, radius)}
     </LineChart>
   );
+}
+
+/** Raio do ponto conforme quantos pontos estao visiveis; `null` = sem pontos (so a linha). */
+function dotRadius(visiblePoints: number): number | null {
+  if (visiblePoints > MAX_DOT_POINTS) return null;
+  return visiblePoints > MANY_POINTS ? DOT_RADIUS_DENSE : DOT_RADIUS;
 }
 
 export function TemperatureChart({
@@ -129,7 +140,7 @@ export function TemperatureChart({
     return {
       axis: buildChartAxis(period ?? getChartPeriod('today'), extent),
       valueDomain: buildValueAxis(points.map((point) => point.temperature)),
-      radius: points.length > MANY_POINTS ? DOT_RADIUS_DENSE : DOT_RADIUS,
+      radius: dotRadius(points.length),
     };
   }, [lines, period]);
   const fixedSize = width !== undefined && height !== undefined;

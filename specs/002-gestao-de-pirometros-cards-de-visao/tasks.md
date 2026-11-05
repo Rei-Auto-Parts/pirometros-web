@@ -205,6 +205,19 @@
 - [x] T161 Alterar `app/adapters/presenters/components/TemperatureChart.tsx` (`type="monotone"`, `strokeWidth`, `strokeLinecap`, `strokeLinejoin`)
 - [x] T162 Conferir o BDD (nenhum passo cita o tipo da linha) e verificação visual com Chromium (Todos e PI-15 isolado); `make validate` verde
 
+## Fase 14 — Correção: desempenho do gráfico denso (RF-10)
+
+- [x] T163 Medir o teste de desempenho antes (3 execuções) e escrever os testes do limite nos dois lados (até 500 pontos com pontos; acima, sem pontos e com a linha) em `app/tests/unit/adapters/presenters/components/TemperatureChart.spec.tsx`
+- [x] T164 Alterar `app/adapters/presenters/components/TemperatureChart.tsx` (constante `MAX_DOT_POINTS`, `dot={false}` acima dela) e medir depois
+
+## Fase 15 — Tema persistente (RF-21)
+
+- [x] T165 Testes unitários da leitura e gravação do tema (válido, inválido, ausente, armazenamento que lança, `localStorage` bloqueado) em `app/tests/unit/infra/tools/theme-storage.tool.spec.ts`; da guarda do `index.html` em `app/tests/unit/infra/web/index-html.spec.ts`; e do hook em `app/tests/unit/adapters/presenters/hooks/useTheme.spec.tsx`
+- [x] T166 Criar `app/core/domain/constants/theme.constants.ts` e `app/infra/tools/theme-storage.tool.ts`; alterar `app/adapters/presenters/hooks/useTheme.ts` e `app/index.html`
+- [x] T167 Limpar o `localStorage` entre testes em `app/tests/setup.ts` e entre cenários em `app/tests/bdd/support/dom.ts`
+- [x] T168 Cenários `Tema escolhido persiste ao recarregar` e `Armazenamento indisponível não quebra o tema` e passos em `app/tests/bdd/gestao-de-pirometros.feature` e `app/tests/bdd/steps/gestao-de-pirometros.steps.tsx`
+- [x] T169 Verificação visual com Chromium (recarregar com tema escuro salvo) e `make validate` verde
+
 ## Rastreabilidade
 
 | Requisito | Tarefas |
@@ -218,8 +231,9 @@
 | RF-07 | T046, T047, T080 |
 | RF-08 | T009, T010, T047, T048, T049, T062, T063, T082 |
 | RF-09 | T004, T005, T011, T012, T028, T029, T038, T039, T050, T051, T083 |
+| RF-21 | T165, T166, T167, T168, T169 |
 | RF-20 | T152, T153, T154, T155, T156, T157, T158, T159 |
-| RF-10 | T160, T161, T162, T142, T143, T144, T145, T146, T013, T014, T015, T016, T017, T018, T052, T053, T084 |
+| RF-10 | T163, T164, T160, T161, T162, T142, T143, T144, T145, T146, T013, T014, T015, T016, T017, T018, T052, T053, T084 |
 | RF-11 | T009, T010, T062, T063, T064, T065, T077 |
 | RF-12 | T060, T061, T062, T063, T086 |
 | RF-13 | T021, T022, T013, T014 |
@@ -459,6 +473,30 @@ Tarefas acrescentadas: nenhuma
 **Excesso de escopo:** nenhum.
 
 **O que as capturas e o jsdom não cobrem:** tema escuro; 3 dias com centenas de pontos por pirômetro (a r=2 e traço de 2,5 px pode adensar mais); e o aspecto do tooltip e do ponto ativo (`r=5`), que dependem de passar o mouse.
+
+Veredito: convergido
+Tarefas acrescentadas: nenhuma
+
+### Rodada 10 — 2026-11-05 (correções: desempenho do gráfico denso — RF-10; tema persistente — RF-21)
+
+| Requisito | Estado | Evidência |
+|---|---|---|
+| RF-10 — desempenho | realizado | causa: 1 `<circle>` por leitura (10 mil em 10 pirômetros × 1.000) mais curva monotônica. `app/adapters/presenters/components/TemperatureChart.tsx`: constante nomeada `MAX_DOT_POINTS = 500`; acima dela (pontos visíveis somando as séries) `dot={false}` mantendo linha suave grossa e `activeDot`; até 500, `r=3` (`r=2` acima de 200) como antes; testes dos dois lados (500 → 500 pontos de `r=2`; 501 → 0 pontos, `path` com `C`, `stroke-width` 2,5; soma de séries 300 + 300). **Limite de 2 s e o teste mantidos, sem `skip`.** |
+| RF-21 — tema | realizado | `app/core/domain/constants/theme.constants.ts` (`THEME_STORAGE_KEY = 'pirometros.theme'`, `Theme`, padrão claro); `app/infra/tools/theme-storage.tool.ts` (`readStoredTheme`/`storeTheme` com `try/catch`, valida o valor); `app/adapters/presenters/hooks/useTheme.ts` (lê a escolha salva, aplica a classe `dark` em efeito, grava só ao alternar); `app/index.html` com script inline (mesma chave, `try/catch`) que aplica o escuro antes da primeira pintura; teste confere a chave do `index.html`; testes unitários do hook (salvo escuro/claro/inválido, não grava ao montar, grava ao alternar, F5 simulado, armazenamento que lança ao ler e ao gravar) e da ferramenta (inclui `localStorage` bloqueado); BDD "Tema escolhido persiste ao recarregar" e "Armazenamento indisponível não quebra o tema" |
+
+**Tempos do teste "dez pirômetros com mil pontos cada" (local, 2 núcleos):** antes **858 / 806 / 883 ms** (e 2.103 ms no CI); depois **255 / 282 / 262 / 266 / 267 ms** e, na rodada final, **260 / 267 / 267 ms**, ou seja, ≈ 3,2× mais rápido. Na proporção do CI (≈ 2,5× mais lento) fica em ≈ 650 ms, com folga de ~3× sob o limite de 2 s, por otimização e não por limite maior.
+
+**`make validate` (saída real):** `fmt` e `lint` (eslint + tsc) sem erros nem avisos; 57 arquivos e **510 testes unitários** passaram (eram 479); cobertura "aprovada: 99.37% (mínimo 90.00%)"; **12 testes de integração** passaram; BDD **62 cenários e 437 passos** passaram (eram 60/362).
+
+**Verificação visual (Chromium headless no container dev):** uma página temporária gravou `pirometros.theme=dark` no `localStorage` e redirecionou para `/` (equivale ao F5): o sistema abriu **no tema escuro** (barra lateral, cards, gráfico e botão "Tema claro"); sem escolha salva (perfil novo) abriu **no claro**. A página temporária foi removida (sem resíduo no código).
+
+**Excesso de escopo:** nenhum.
+
+**O que o jsdom não verifica:**
+1. A ausência de "piscada" do tema errado: o script inline do `index.html` roda antes da primeira pintura, mas o jsdom não pinta; a captura mostra o resultado final, não a transição do carregamento. O BDD simula o F5 (documento novo + app remontado) e o teste unitário garante que o script usa a mesma chave.
+2. O comportamento real de navegadores com armazenamento bloqueado (modo privado, cookies desativados): simulado com `localStorage` que lança erro.
+3. O desempenho real em outra máquina: o teste mede o jsdom; no CI do GitHub deve ficar em ≈ 0,6–0,7 s pela proporção medida, a confirmar na próxima execução.
+4. O ponto ativo e a dica do gráfico denso (> 500 pontos) ao passar o mouse: continuam configurados (`activeDot`), mas o jsdom não simula o mouse sobre o SVG.
 
 Veredito: convergido
 Tarefas acrescentadas: nenhuma

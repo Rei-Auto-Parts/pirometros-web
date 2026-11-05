@@ -96,7 +96,7 @@
 | Eixo de temperatura | Função pura `buildValueAxis(valores)` em `core/domain/models/value-axis.model.ts`: sem valores devolve `null` (o gráfico usa o padrão); com valores, `[mín − margem, máx + margem]` com margem `max(5% da amplitude, 20)`, arredondando para baixo/cima a múltiplos de 50 (de 10 quando a faixa total é menor que 200); nunca clampa em 0 | RF-20; legibilidade |
 | Eixo de horário | `buildChartAxis(período, extensão?)`: com extensão (primeiro e último `x` exibidos), domínio `[mín − folga, máx + folga]` com folga `max(2% da extensão, 300 s)`; sem extensão, a janela do período como antes. A data aparece nas marcas quando o domínio cruza a meia-noite (calculado pelo dia da época, não pelo texto do período) | O seletor continua definindo quais leituras vêm; o eixo mostra só o que veio |
 | Marcas | `STEPS` ganha um degrau de 5 min para extensões até 30 min; os demais (15 min, 1 h, 3 h, 12 h) não mudam | Extensões curtas ainda ganham marcas |
-| Ponto | `r=3`; `r=2` quando o total de pontos visíveis passa de 200; `activeDot` segue `r=5`; linha reta e tooltip mantidos | RF-10 |
+| Ponto | `r=3`; `r=2` quando o total de pontos visíveis passa de 200; **acima de 500 pontos não desenha pontos (ver a emenda de desempenho abaixo);** `activeDot` segue `r=5`; linha reta e tooltip mantidos | RF-10 |
 | Onde calcula | `TemperatureChart` calcula extensão e domínio a partir das séries recebidas (já filtradas por período, pirômetro e ativos) e memoiza | Sem mudar página nem API |
 
 **Arquivos da emenda:** `core/domain/models/value-axis.model.ts` (novo, +spec), `core/domain/models/chart-axis.model.ts` (+spec), `adapters/presenters/components/TemperatureChart.tsx` (+spec), e o BDD (`gestao-de-pirometros.feature` e `.steps.tsx`).
@@ -111,6 +111,20 @@
 | Risco | Rajadas com muitos pontos: traço grosso mais pontos podem virar mancha | Verificado em captura (Todos e PI-15 isolado); o ponto já encolhe a `r=2` acima de 200 pontos |
 
 **Arquivos da emenda:** `adapters/presenters/components/TemperatureChart.tsx` (+spec) e o spec/plan/tasks; o BDD não cita o tipo da linha.
+
+## Emenda de 2026-11-05: desempenho do gráfico denso e tema persistente (RF-10, RF-21)
+
+| Decisão | Escolha | Por quê |
+|---|---|---|
+| Causa da regressão | Ponto em cada leitura (um `<circle>` por ponto) mais curva monotônica: 10 pirômetros × 1.000 leituras = 10 mil `<circle>`. Medido antes: ~0,8–0,9 s local e 2,1 s no CI (limite 2 s) | Regressão real das emendas de ponto e curva |
+| Correção | Constante nomeada `MAX_DOT_POINTS = 500` (pontos visíveis somando as séries): acima dela `dot={false}`, mantendo linha suave grossa e `activeDot` (ponto ativo e dica ao passar o mouse); até 500, pontos como antes (`r=3`, `r=2` acima de 200) | Corrige a causa sem afrouxar nem pular o teste; também evita a mancha nos 3 dias |
+| Tema: onde guarda | `localStorage`, chave nomeada `THEME_STORAGE_KEY = 'pirometros.theme'` em `core/domain/constants/theme.constants.ts` (com o tipo `Theme` e o padrão claro) | Constante única; sem número nem texto solto |
+| Tema: acesso | `infra/tools/theme-storage.tool.ts` (`readStoredTheme`, `storeTheme`), com `try/catch` (armazenamento bloqueado, cheio ou ausente) e validação do valor lido | Falhar em silêncio e voltar ao claro |
+| Tema: aplicação | `useTheme` lê a escolha salva no estado inicial, aplica a classe `dark` em efeito e grava só ao alternar (não grava o padrão). **Antes da primeira pintura**, um script inline em `index.html` (mesma chave, com `try/catch`) já põe a classe `dark` | Sem piscar o claro no F5; o nginx não tem CSP, então o script inline é permitido |
+| Guarda | Teste lê `index.html` e confere que o script usa a mesma chave | Evita as duas chaves divergirem |
+| BDD | `After` limpa o `localStorage` entre cenários (senão a escolha vaza) | Isolamento |
+
+**Arquivos das emendas:** `adapters/presenters/components/TemperatureChart.tsx` (+spec), `core/domain/constants/theme.constants.ts`, `infra/tools/theme-storage.tool.ts` (+spec), `adapters/presenters/hooks/useTheme.ts` (+spec), `index.html`, `tests/setup.ts` e `tests/bdd/support/dom.ts` (limpeza do armazenamento) e o BDD (`gestao-de-pirometros.feature`, `.steps.tsx`).
 
 ## Padrões de projeto aplicados
 

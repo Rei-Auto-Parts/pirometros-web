@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pirômetros</title>
+    <script>
+      /* Aplica o tema salvo antes da primeira pintura, para o F5 nao piscar o claro.
+         A chave e a de core/domain/constants/theme.constants.ts (um teste confere). */
+      try {
+        if (localStorage.getItem('pirometros.theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (error) {
+        /* armazenamento bloqueado: segue no claro */
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

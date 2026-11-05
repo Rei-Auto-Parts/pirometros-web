@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { Given, Then, When } from '@cucumber/cucumber';
-import { fireEvent, screen, within } from '@testing-library/react';
+import { After, Given, Then, When } from '@cucumber/cucumber';
+import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { PYROMETER_PALETTE } from '../../../core/domain/constants/pyrometer-profile.constants';
 import { toEpochSeconds } from '../../../core/domain/models/reg-date.model';
 import { buildChartAxis } from '../../../core/domain/models/chart-axis.model';
@@ -903,3 +903,76 @@ Then(
     assert.deepEqual(period, { start: `${DAY}T00:00:00`, end: `${DAY}T23:59:59` });
   },
 );
+
+// ---- Correcao de 2026-11-05: tema persistente (RF-21)
+
+function darkIsOn(): boolean {
+  return document.documentElement.classList.contains('dark');
+}
+
+/** Simula o F5: documento novo (sem a classe), app remontado; so o armazenamento sobrevive. */
+function reload(world: PainelWorld): void {
+  cleanup();
+  document.documentElement.classList.remove('dark');
+  world.open('/');
+}
+
+Given('que alterno para o tema escuro', function () {
+  fireEvent.click(screen.getByRole('button', { name: 'Tema escuro' }));
+  assert.ok(darkIsOn());
+});
+
+When('eu recarrego a página', function (this: PainelWorld) {
+  reload(this);
+});
+
+Then('o sistema abre no tema escuro', async function (this: PainelWorld) {
+  await this.eventually(() => {
+    assert.ok(darkIsOn());
+    assert.ok(screen.getByRole('button', { name: 'Tema claro' }));
+  });
+});
+
+Then('sem escolha salva o sistema abre no tema claro', async function (this: PainelWorld) {
+  localStorage.clear();
+  reload(this);
+  await this.eventually(() => assert.ok(screen.getByRole('button', { name: 'Tema escuro' })));
+  assert.ok(!darkIsOn());
+});
+
+let realStorage: PropertyDescriptor | undefined;
+
+Given('que o navegador não permite guardar a escolha', function () {
+  realStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    get() {
+      throw new Error('armazenamento bloqueado');
+    },
+  });
+});
+
+/** Roda antes do `After` de `chart-env` (que limpa o armazenamento): o armazenamento volta ao normal primeiro. */
+After(function () {
+  if (realStorage !== undefined) {
+    Object.defineProperty(globalThis, 'localStorage', realStorage);
+    realStorage = undefined;
+  }
+});
+
+When('eu abro o sistema e alterno para o tema escuro', function (this: PainelWorld) {
+  this.open('/');
+  fireEvent.click(screen.getByRole('button', { name: 'Tema escuro' }));
+});
+
+Then('o tema escuro vale na sessão', async function (this: PainelWorld) {
+  await this.eventually(() => {
+    assert.ok(darkIsOn());
+    assert.ok(screen.getByRole('button', { name: 'Tema claro' }));
+  });
+});
+
+Then('nenhum erro aparece na tela', function () {
+  assert.equal(screen.queryAllByRole('alert').length, 0);
+  assert.ok(screen.getByRole('heading', { level: 1 }));
+});

@@ -68,12 +68,13 @@ O restante da 001 vale, inclusive RF-13 (atualização periódica) com o interva
 | RF-07 | O tempo sem leitura é só informação: o card não muda de aparência, não alerta e não recebe destaque por falta de leitura ou por bateria baixa, por maior que seja o tempo. | obrigatório |
 | RF-08 | Os cards ficam em ordem alfabética pelo nome mostrado. Clicar num card deve filtrar o gráfico para aquele pirômetro; clicar de novo, ou escolher "Todos" no filtro, volta a mostrar todos. O filtro de pirômetro e o card selecionado ficam sempre em sincronia. | obrigatório |
 | RF-09 | O gráfico deve permitir escolher o período entre Última hora, Últimas 6 horas, Últimas 24 horas, Hoje (padrão) e Últimos 3 dias, sem recarregar a página e mantendo o pirômetro filtrado. *(Emenda de 2026-11-05: o período define **quais leituras são buscadas**; o eixo de horário não cobre mais a janela inteira, ver RF-20.)* | obrigatório |
-| RF-10 | O gráfico deve desenhar uma linha por pirômetro na cor dele, **sempre ligando todas as leituras do pirômetro com uma linha contínua, sem interrupção por intervalo**, de traço mais grosso (≈ 2,5 px) com pontas e junções arredondadas e **suavizada de forma monotônica**: a curva passa por todas as leituras e nunca ultrapassa os valores medidos entre duas leituras, isto é, não cria picos nem vales inventados;, e mostrar **um ponto pequeno em cada leitura** (maior ao passar o mouse), na cor da linha. Leituras espaçadas por minutos ou horas continuam visíveis. O ponto tem raio 3 e passa a raio 2 quando há mais de 200 pontos visíveis, para não virar uma mancha (a linha continua visível); passar o mouse mostra a leitura (dica) e destaca o ponto. *(Emenda de 2026-11-05: substitui a lacuna de 15 minutos, que escondia leituras isoladas.)* | obrigatório |
+| RF-10 | O gráfico deve desenhar uma linha por pirômetro na cor dele, **sempre ligando todas as leituras do pirômetro com uma linha contínua, sem interrupção por intervalo**, de traço mais grosso (≈ 2,5 px) com pontas e junções arredondadas e **suavizada de forma monotônica**: a curva passa por todas as leituras e nunca ultrapassa os valores medidos entre duas leituras, isto é, não cria picos nem vales inventados;, e mostrar **um ponto pequeno em cada leitura** (maior ao passar o mouse), na cor da linha. Leituras espaçadas por minutos ou horas continuam visíveis. O ponto tem raio 3 e passa a raio 2 quando há mais de 200 pontos visíveis; **acima de 500 pontos visíveis (somando as séries) os pontos individuais deixam de ser desenhados** (desempenho e para não virar uma mancha, como nos 3 dias), mantendo a linha suave e grossa; em qualquer caso, passar o mouse mostra a leitura (dica) e destaca o ponto ativo. *(Emenda de 2026-11-05: substitui a lacuna de 15 minutos, que escondia leituras isoladas.)* | obrigatório |
 | RF-11 | Pirômetros inativos não aparecem nos cards, no gráfico nem no filtro do Acompanhamento. Continuam na tela Pirômetros e disponíveis no filtro das Leituras, para consultar o histórico. | obrigatório |
 | RF-12 | Os cards, o gráfico e a tela Pirômetros devem indicar que estão carregando, informar quando não há dados e quando a API está indisponível, permitindo tentar de novo. Com a API indisponível, o menu, o tema e o recolher do menu continuam funcionando. | obrigatório |
 | RF-13 | Toda data aparece como `dd/MM/yyyy HH:mm`, sem conversão de fuso, e todo texto é em português do Brasil. | obrigatório |
 | RF-14 | Depois de salvar um complemento, os cards, o gráfico e os filtros passam a mostrar o novo apelido e a nova cor sem recarregar a página. | obrigatório |
 | RF-20 | Os eixos do gráfico se ajustam aos dados exibidos, para a linha ser legível. **Eixo de temperatura:** vai de `mín − margem` a `máx + margem`, com margem de 5% da amplitude (mínimo 20 °C) e limites arredondados a múltiplos de 50 (ou de 10 quando a faixa total é menor que 200 °C); **nunca parte de 0**. **Eixo de horário:** vai da primeira à última leitura exibida, com folga de 2% da extensão (mínimo 5 minutos) de cada lado, com marcas em passos conforme a duração (5 min, 15 min, 1 h, 3 h ou 12 h). **Sem leituras**, os eixos voltam ao padrão: temperatura automática e horário cobrindo a janela do período. O seletor de período continua definindo quais leituras são buscadas. *(Emenda de 2026-11-05: substitui "o eixo cobre a janela inteira", que espremia leituras em rajadas curtas no topo e em riscos minúsculos.)* | obrigatório |
+| RF-21 | A escolha de tema (claro ou escuro) **persiste ao recarregar a página** (F5): fica salva no navegador e é aplicada ao carregar, antes da primeira pintura, sem piscar o tema errado. Sem escolha salva, o sistema abre no claro, como antes. Se o navegador não permitir guardar (armazenamento bloqueado ou indisponível), o tema continua funcionando na sessão, sem erro. *(Emenda de 2026-11-05: substitui "abre sempre no claro" depois de uma escolha.)* | obrigatório |
 | RF-15 | Dois pirômetros nunca têm a mesma cor. Na tela Pirômetros, cada cor da paleta usada por **outro** pirômetro (pela cor efetiva que a API devolve, inclusive a padrão) aparece desabilitada, com a indicação de quem a usa ("em uso por PI-13", em texto acessível e em dica). A cor atual do próprio pirômetro continua selecionável. Se a API recusar a gravação por cor já usada (409), a tela mostra mensagem clara em português e preserva o que o usuário digitou. *(Emenda de 2026-11-05.)* | obrigatório |
 | RF-16 | Os cards ficam lado a lado, em grade responsiva e compactos: 2 colunas em telas estreitas, 3 a partir de 1024 px e 4 a partir de 1280 px. *(Emenda de 2026-11-05.)* | obrigatório |
 | RF-17 | A tela Pirômetros usa **duas colunas** a partir de 1024 px de largura, ocupando toda a largura disponível: a lista à esquerda e o painel de edição fixo (acompanha a rolagem) à direita; abaixo de 1024 px a lista fica em cima e o painel embaixo. O primeiro pirômetro da lista vem selecionado. A linha selecionada tem destaque (fundo e barra lateral na cor do pirômetro) e é marcada como selecionada para leitores de tela. A lista inteira é navegável por teclado (setas, Tab e Enter). O cabeçalho da página é compacto: título e uma linha de descrição. *(Emenda de 2026-11-05.)* | obrigatório |
@@ -277,6 +278,19 @@ Funcionalidade: Gestão de pirômetros, cards e gráfico
     E o eixo de horário cobre de 09:55 a 10:19, só a extensão das leituras
     Mas o período "Hoje" continua definindo quais leituras são buscadas
 
+  Cenário: Tema escolhido persiste ao recarregar
+    Dado que abri o sistema
+    E que alterno para o tema escuro
+    Quando eu recarrego a página
+    Então o sistema abre no tema escuro
+    Mas sem escolha salva o sistema abre no tema claro
+
+  Cenário: Armazenamento indisponível não quebra o tema
+    Dado que o navegador não permite guardar a escolha
+    Quando eu abro o sistema e alterno para o tema escuro
+    Então o tema escuro vale na sessão
+    Mas nenhum erro aparece na tela
+
 ```
 
 ## Ambiguidades
@@ -309,6 +323,8 @@ Nenhuma em aberto.
 | Miniatura (sparkline) do card | Removida a pedido do usuário; a consulta extra de série da última hora some junto (emenda 2026-11-05) | 2026-11-05 |
 | Eixos do gráfico | Temperatura de mín−margem a máx+margem (5%, mínimo 20 °C, múltiplos de 50 ou 10), nunca de 0; horário da primeira à última leitura com folga de 2% (mínimo 5 min); sem dados, padrão e janela do período; ponto r=3, r=2 acima de 200 pontos (emenda 2026-11-05) | 2026-11-05 |
 | Linha do gráfico: suavizada e mais grossa | Traço ≈ 2,5 px, pontas e junções arredondadas, curva monotônica (monotoneX) que não ultrapassa os valores medidos; substitui a linha reta/`linear` (emenda 2026-11-05) | 2026-11-05 |
+| Pontos do gráfico e desempenho | Pontos individuais só até 500 pontos visíveis (r=3; r=2 acima de 200); acima disso só a linha suave, com ponto ativo e dica ao passar o mouse; o limite de 2 s do teste de desempenho foi mantido (emenda 2026-11-05) | 2026-11-05 |
+| Tema persistente | Escolha salva no `localStorage` e aplicada antes da primeira pintura; sem escolha, claro; armazenamento indisponível não quebra (emenda 2026-11-05) | 2026-11-05 |
 | Exportação CSV | Fora de escopo por enquanto | 2026-11-05 |
 | E-mail e notificação | Fora de escopo | 2026-11-05 |
 

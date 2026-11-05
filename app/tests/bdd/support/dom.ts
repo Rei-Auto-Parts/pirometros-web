@@ -17,6 +17,8 @@ After(function (this: { queryClient?: QueryClient }) {
   cleanup();
   this.queryClient?.clear();
   document.documentElement.classList.remove('dark');
+  // A escolha de tema fica no armazenamento do jsdom: sem limpar, ela vazaria para o proximo cenario.
+  localStorage.clear();
 });
 
 AfterAll(() => {

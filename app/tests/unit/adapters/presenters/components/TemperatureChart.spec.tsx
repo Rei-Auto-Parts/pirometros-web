@@ -491,4 +491,51 @@ describe('TemperatureChart', () => {
     expect(Math.min(...pathYs)).toBeGreaterThanOrEqual(Math.min(...ys) - epsilon);
     expect(Math.max(...pathYs)).toBeLessThanOrEqual(Math.max(...ys) + epsilon);
   });
+
+  it('deve ainda desenhar os pontos, com raio 2, quando ha exatamente 500 pontos visiveis', () => {
+    // Arrange
+    const series = seriesOf(manyPoints(500));
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    const dots = container.querySelectorAll('.recharts-line-dot');
+    expect(dots).toHaveLength(500);
+    expect(dots[0]?.getAttribute('r')).toBe('2');
+  });
+
+  it('deve deixar de desenhar os pontos e manter a linha suave quando ha mais de 500 pontos visiveis', () => {
+    // Arrange
+    const series = seriesOf(manyPoints(501));
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    expect(container.querySelectorAll('.recharts-line-dot')).toHaveLength(0);
+    const curve = container.querySelector('.recharts-line-curve');
+    expect(curve?.getAttribute('d')).toMatch(/C/);
+    expect(curve?.getAttribute('stroke-width')).toBe('2.5');
+    expect(curve?.getAttribute('stroke-linecap')).toBe('round');
+  });
+
+  it('deve somar as series para decidir quando passa de 500 pontos visiveis', () => {
+    // Arrange
+    const base = seriesOf(manyPoints(300))[0] as PyrometerSeriesDto;
+    const series = [base, { ...base, pyrometerId: 'SN-2', pyrometerName: 'Forno 2' }];
+
+    // Act
+    const { container } = render(
+      <TemperatureChart series={series} period={DAY} width={800} height={400} />,
+    );
+
+    // Assert
+    expect(container.querySelectorAll('.recharts-line-dot')).toHaveLength(0);
+    expect(container.querySelectorAll('.recharts-line-curve')).toHaveLength(2);
+  });
 });
